@@ -1,4 +1,4 @@
-import { BytesSink, IHash256 } from '../types'
+import { BytesSink, HashT256 } from '../types'
 import { sha512 } from '@noble/hashes/sha512'
 import { Hash256 } from './Hash256'
 
@@ -9,10 +9,10 @@ export class Sha512 implements BytesSink {
     return new Sha512().put(bytes)
   }
 
-  static half(...args: Uint8Array[]): Uint8Array {
+  static half(...args: Uint8Array[]) {
     const hash = new Sha512()
-    args.forEach((a) => hash.put(a))
-    return hash.finish256()
+    args.forEach(a => hash.put(a))
+    return hash.finish()
   }
 
   put(bytes: Uint8Array): this {
@@ -24,7 +24,7 @@ export class Sha512 implements BytesSink {
     return Uint8Array.from(this.hash.digest().slice(0, 32))
   }
 
-  finish(): IHash256 {
+  finish(): HashT256 {
     return Hash256.fromBytes(this.finish256())
   }
 }

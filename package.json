@@ -4,7 +4,8 @@
   "description": "tools for hashing ripple account state/ transaction trees",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc -b ."
   },
   "keywords": [
     "shamap",

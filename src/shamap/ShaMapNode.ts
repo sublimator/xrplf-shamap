@@ -1,4 +1,4 @@
-import { IHash256 } from '../types'
+import { HashT256 } from '../types'
 import { type ShaMapLeaf } from './ShaMapLeaf'
 import { type ShaMapInner } from './ShaMapInner'
 
@@ -7,5 +7,5 @@ export abstract class ShaMapNode {
 
   abstract isInner(): this is ShaMapInner
 
-  abstract hash(): IHash256
+  abstract hash(): HashT256
 }

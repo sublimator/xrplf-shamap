@@ -1,13 +1,16 @@
 import { ShaMapNode } from './ShaMapNode'
-import { IHash256, IIndex } from '../types'
+import { HashT256, PathIndex } from '../types'
 import { ShaMapItem } from './ShaMapItem'
 import { Sha512 } from '../hashes/Sha512'
 import { Hash256 } from '../hashes/Hash256'
 
 export class ShaMapLeaf extends ShaMapNode {
-  private readonly itemHash: () => IHash256
+  private readonly itemHash: () => HashT256
 
-  constructor(public index: IIndex, item: ShaMapItem) {
+  constructor(
+    public index: PathIndex,
+    item: ShaMapItem
+  ) {
     super()
     if ('preHashed' in item) {
       this.itemHash = () => item.preHashed
@@ -24,7 +27,7 @@ export class ShaMapLeaf extends ShaMapNode {
     }
   }
 
-  hash(): IHash256 {
+  hash(): HashT256 {
     return this.itemHash()
   }
 

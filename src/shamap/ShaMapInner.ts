@@ -1,14 +1,15 @@
 import { ShaMapNode } from './ShaMapNode'
 import { HashPrefix } from '../hashes/HashPrefix'
-import { BytesSink, IHash256 } from '../types'
+import { BytesSink, FullIndex, HashT256, PathIndex } from '../types'
 import { ShaMapLeaf } from './ShaMapLeaf'
 import { Hash256 } from '../hashes/Hash256'
 import { ShaMapItem } from './ShaMapItem'
 import { Sha512 } from '../hashes/Sha512'
+import { isHashable } from '../utils/guards'
 
 export class ShaMapInner extends ShaMapNode {
   private slotBits = 0
-  private branches: Array<ShaMapNode> = Array(16)
+  private branches: Array<ShaMapNode> = Array.from({ length: 16 })
 
   constructor(private depth: number = 0) {
     super()
@@ -34,7 +35,7 @@ export class ShaMapInner extends ShaMapNode {
     return this.slotBits === 0
   }
 
-  hash(): IHash256 {
+  hash(): HashT256 {
     if (this.empty()) {
       return Hash256.ZERO_256
     }
@@ -51,7 +52,17 @@ export class ShaMapInner extends ShaMapNode {
     }
   }
 
-  addItem(index: IHash256, item: ShaMapItem): void {
+  getItemAtPath(index: FullIndex): void
+  getItemAtPath(index: PathIndex, expectedHash: HashT256): void
+  getItemAtPath(index: PathIndex | FullIndex, expectedHash?: HashT256): void {
+    const nibble = index.nibble(this.depth)
+  }
+
+  addItem(index: PathIndex, item: ShaMapItem): void {
+    if (isHashable(item)) {
+      Hash256.assertInstance(index, 'expecting full tree')
+    }
+
     const nibble = index.nibble(this.depth)
     const existing = this.branches[nibble]
     if (existing === undefined) {
@@ -72,7 +83,7 @@ export class ShaMapInner extends ShaMapNode {
   }
 
   walkLeaves(onLeaf: (leaf: ShaMapLeaf) => void) {
-    this.branches.forEach((b) => {
+    this.branches.forEach(b => {
       if (b.isLeaf()) {
         onLeaf(b)
       } else if (b.isInner()) {
