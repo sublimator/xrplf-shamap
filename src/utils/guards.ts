@@ -25,7 +25,7 @@ export function isBytesSinkable(val: object): val is BytesSinkable {
 }
 
 export function isIHash256(val: PathIndex | HashT256): val is HashT256 {
-  return isBytesSinkable(val)
+  return isBytesSinkable(val) && val.nibbles == 64
 }
 
 export function assertsIsIHash256(

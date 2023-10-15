@@ -1,6 +1,6 @@
 import { PathIndex } from '../types'
 import { isString } from '../utils/guards'
-import { hexToBytes } from '@noble/hashes/utils'
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
 
 export function nibblesToBytes(nibbles: number[]) {
   const bytes = new Uint8Array(nibbles.length / 2)
@@ -14,7 +14,11 @@ export class Index implements PathIndex {
   constructor(
     public readonly buffer: Readonly<Uint8Array>,
     public nibbles: number
-  ) {}
+  ) {
+    if (nibbles === 0) {
+      throw new Error(`Need at least one nibble`)
+    }
+  }
 
   nibble(n: number): number {
     if (n + 1 > this.nibbles) {
@@ -25,6 +29,10 @@ export class Index implements PathIndex {
     const nibbleIx = n % 2
     const byte = this.buffer[byteIx]
     return nibbleIx === 1 ? byte & 0x0f : (byte & 0xf0) >> 4
+  }
+
+  toHex(): string {
+    return bytesToHex(this.buffer).slice(0, this.nibbles)
   }
 
   static fromNibbles(nibbles: string | number[]): Index

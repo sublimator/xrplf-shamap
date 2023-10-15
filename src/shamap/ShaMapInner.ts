@@ -60,7 +60,7 @@ export class ShaMapInner extends ShaMapNode {
 
   addItem(index: PathIndex, item: ShaMapItem): void {
     if (isHashable(item)) {
-      Hash256.assertInstance(index, 'expecting full tree')
+      Hash256.assertIsHashT256(index, 'expecting full tree')
     }
 
     const nibble = index.nibble(this.depth)

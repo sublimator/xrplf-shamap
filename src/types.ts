@@ -18,11 +18,12 @@ export interface PathIndex {
   nibbles: number
 
   nibble(n: number): number
+
+  toHex(): string
 }
 
 export interface HashT256 extends BytesSinkable, PathIndex {
   nibbles: 64
-  // toHex(): string
 }
 
 export type FullIndex = HashT256

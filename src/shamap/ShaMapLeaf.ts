@@ -16,7 +16,7 @@ export class ShaMapLeaf extends ShaMapNode {
       this.itemHash = () => item.preHashed
     } else if ('hashPrefix' in item && 'toBytesSink' in item) {
       this.itemHash = () => {
-        Hash256.assertInstance(index)
+        Hash256.assertIsHashT256(index)
         const hash = Sha512.put(item.hashPrefix())
         item.toBytesSink(hash)
         index.toBytesSink(hash)

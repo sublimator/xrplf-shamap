@@ -19,15 +19,15 @@ export class Hash256 extends Index implements HashT256 {
     sink.put(this.buffer)
   }
 
-  static isHash256(val: PathIndex | HashT256): val is HashT256 {
+  static isHashT256(val: PathIndex | HashT256): val is HashT256 {
     return val instanceof Hash256 || isIHash256(val)
   }
 
-  static assertInstance(
+  static assertIsHashT256(
     val: PathIndex | HashT256,
     msg = 'error'
   ): asserts val is HashT256 {
-    if (!this.isHash256(val)) {
+    if (!this.isHashT256(val)) {
       throw new Error(`Must be Hash256: ${msg}`)
     }
   }
@@ -37,7 +37,7 @@ export class Hash256 extends Index implements HashT256 {
       return new Hash256(hexToBytes(val))
     } else if (isU8a(val)) {
       return new Hash256(val)
-    } else if (Hash256.isHash256(val)) {
+    } else if (Hash256.isHashT256(val)) {
       return val
     }
     throw new Error(`Invalid value ${val} for Hash256`)
