@@ -33,7 +33,7 @@ export default ({
       transform,
       prettierPath,
       extensionsToTreatAsEsm: useESM ? ['.ts'] : undefined,
-      testPathIgnorePatterns: ['\\.puppeteer\\.test\\.ts$']
+      testPathIgnorePatterns: ['dist/.*', '\\.puppeteer\\.test\\.ts$']
     }
   ]
 })

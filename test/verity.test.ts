@@ -64,12 +64,16 @@ describe('Known SHAMap hashes', () => {
           const hash = hashItem(index, item)
           const path = full.pathToLeaf(index)
           const abbr = buildAbbreviatedMap(path)
+          expect(abbr.hash().toHex()).toBe(expectedHash)
           const trie = abbr.trieJSON()
+          expect(trie).toMatchSnapshot()
           const fromTrie = ShaMap.fromTrieJSON(trie)
           expect(fromTrie.hash().toHex()).toBe(expectedHash)
-          expect(abbr.hash().toHex()).toBe(expectedHash)
+          // The items don't have an index to be able to match by index
           expect(fromTrie.pathToLeaf(index).leaf).toBeUndefined()
-          expect(fromTrie.pathToLeaf(index, hash).leaf!.index)
+          // But we can pass in a hash to match
+          expect(fromTrie.pathToLeaf(index, hash).leaf).toBeDefined()
+          expect(fromTrie.hasHashed(index, hash)).toBe(true)
         }
       )
     }

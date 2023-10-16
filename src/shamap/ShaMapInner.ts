@@ -51,31 +51,35 @@ export class ShaMapInner extends ShaMapNode {
       return Hash256.ZERO_256
     }
     const hash = Sha512.put(HashPrefix.innerNode)
-    this.toBytesSink(hash)
+    this.toSink(hash)
     return hash.finish()
   }
 
-  toBytesSink(list: BytesSink): void {
+  toSink(list: BytesSink): void {
     for (let i = 0; i < this.branches.length; i++) {
       const branch = this.branches[i]
       const hash = branch ? branch.hash() : Hash256.ZERO_256
-      hash.toBytesSink(list)
+      hash.toSink(list)
     }
   }
 
-  addItem(index: PathIndex, item: ShaMapItem): void {
-    return this._addItem(index, item)
+  hasHashed(index: PathIndex, hash: HashT256) {
+    return Boolean(this._findPathToLeaf(index, hash).leaf)
   }
 
-  protected _addItem(index: PathIndex, item: ShaMapItem, depth = 0): void {
-    const nibble = index.nibblet(this.depth)
+  addItem(index: PathIndex, item: ShaMapItem, depth = 0): void {
+    if (depth !== 0 && !('preHashed' in item)) {
+      throw new Error('probably a mistake')
+    }
+
+    const nibble = index.nibble(this.depth)
     const existing = this.branches[nibble]
     if (existing === undefined) {
       if (this.depth < depth) {
         // Private operation, can leave tree in bad state
         const shaMapInner = new ShaMapInner(this.depth + 1)
         this.setBranch(nibble, shaMapInner)
-        shaMapInner._addItem(index, item, depth)
+        shaMapInner.addItem(index, item, depth)
       } else {
         this.setBranch(nibble, new ShaMapLeaf(index, item))
       }
@@ -84,26 +88,14 @@ export class ShaMapInner extends ShaMapNode {
       const newInner = new ShaMapInner(deeper)
       // Set this first in empty inner so addItem can recursively
       // add many inners until indexes diverge.
-      newInner.setBranch(existing.index.nibblet(deeper), existing)
-      newInner._addItem(index, item, depth)
+      newInner.setBranch(existing.index.nibble(deeper), existing)
+      newInner.addItem(index, item, depth)
       this.setBranch(nibble, newInner)
     } else if (existing.isInner()) {
-      existing._addItem(index, item, depth)
+      existing.addItem(index, item, depth)
     } else {
       throw new Error('invalid ShaMap.addItem call')
     }
-  }
-
-  walkLeaves(onLeaf: (leaf: ShaMapLeaf) => void) {
-    this.branches.forEach(b => {
-      if (b) {
-        if (b.isLeaf()) {
-          onLeaf(b)
-        } else if (b.isInner()) {
-          b.walkLeaves(onLeaf)
-        }
-      }
-    })
   }
 
   protected _findPathToLeaf(
@@ -111,7 +103,7 @@ export class ShaMapInner extends ShaMapNode {
     leafHash?: HashT256,
     stack: ShaMapInner[] = []
   ): StackToPath {
-    const nibble = leafIndex.nibblet(this.depth)
+    const nibble = leafIndex.nibble(this.depth)
     const target = this.branches[nibble]
 
     if (!target) {

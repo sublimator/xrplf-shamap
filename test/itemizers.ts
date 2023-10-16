@@ -8,7 +8,7 @@ export const accountItem = (t: { index: string }) => {
   const index = Hash256.from(t.index)
   const item: Hashable = {
     hashPrefix: () => HashPrefix.accountStateEntry,
-    toBytesSink(sink) {
+    toSink(sink) {
       sink.put(STObject.from(t).toBytes())
     }
   }
@@ -18,7 +18,7 @@ export const txItem = (t: { hash: string; metaData: {} }) => {
   const index = Hash256.from(t.hash)
   const item: Hashable = {
     hashPrefix: () => HashPrefix.transaction,
-    toBytesSink(sink) {
+    toSink(sink) {
       // We shouldn't need this, but ripple-binary-codec got messed up
       const blSink = new BytesList()
       const serializer = new BinarySerializer(blSink)

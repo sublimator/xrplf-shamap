@@ -15,8 +15,7 @@ export interface BytesSink {
 }
 
 export interface BytesSinkable {
-  // TODO: toSink() ;)
-  toBytesSink: (sink: BytesSink) => void
+  toSink: (sink: BytesSink) => void
 }
 
 export interface Hashable extends BytesSinkable {
@@ -30,7 +29,7 @@ export interface PreHashed {
 export interface PathIndex {
   nibbles: number
 
-  nibblet(n: number): number
+  nibble(n: number): number
 
   eq(leafIndex: PathIndex): boolean
 }
@@ -41,6 +40,7 @@ export interface Hexed {
 
 export interface HashT256 extends BytesSinkable, Hexed, PathIndex {
   nibbles: 64
+  eq(leafIndex: HashT256): boolean
 }
 
 export type FullIndex = HashT256

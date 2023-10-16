@@ -1,16 +1,6 @@
-import {
-  BytesSinkable,
-  Hashable,
-  HashT256,
-  PathIndex,
-  PreHashed
-} from '../types'
-import { ShaMapItem } from '../shamap/ShaMapItem'
-import * as assert from 'assert'
+import { BytesSinkable, HashT256, PathIndex } from '../types'
 
-export const TO_BYTES_SINK = 'toBytesSink'
-export const PRE_HASHED = 'preHashed'
-export const HASH_PREFIX = 'hashPrefix'
+export const TO_SINK = 'toSink' as const
 
 export function isString(val: unknown): val is string {
   return typeof val === 'string'
@@ -21,27 +11,11 @@ export function isU8a(val: unknown): val is Uint8Array {
 }
 
 export function isBytesSinkable(val: object): val is BytesSinkable {
-  return TO_BYTES_SINK in val && typeof val[TO_BYTES_SINK] === 'function'
+  return TO_SINK in val && typeof val[TO_SINK] === 'function'
 }
 
 export function isHashT256(val: PathIndex | HashT256): val is HashT256 {
   return isBytesSinkable(val) && val.nibbles == 64
-}
-
-export function assertsIsHashT256(
-  val: PathIndex | HashT256
-): asserts val is HashT256 {
-  if (!isHashT256(val)) {
-    throw new Error(`Expecting hash256, not index`)
-  }
-}
-
-export function isPreHashed(item: ShaMapItem): item is PreHashed {
-  return PRE_HASHED in item
-}
-
-export function isHashable(item: ShaMapItem): item is Hashable {
-  return TO_BYTES_SINK in item && HASH_PREFIX in item
 }
 
 export function assertLength<N extends number>(

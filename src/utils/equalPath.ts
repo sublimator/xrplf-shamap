@@ -6,7 +6,7 @@ export function equalPath(a: PathIndex, b: PathIndex) {
   }
 
   for (let i = 0; i < a.nibbles; i++) {
-    if (a.nibblet(i) !== b.nibblet(i)) {
+    if (a.nibble(i) !== b.nibble(i)) {
       return false
     }
   }

@@ -7,12 +7,12 @@ export type ShaMapItem = Hashable | PreHashed
 export function createItemHashFunc(index: PathIndex, item: ShaMapItem) {
   if ('preHashed' in item) {
     return () => item.preHashed
-  } else if ('hashPrefix' in item && 'toBytesSink' in item) {
+  } else if ('hashPrefix' in item && 'toSink' in item) {
     return () => {
       Hash256.assertIsHashT256(index, 'probably expecting full tree')
       const hash = Sha512.put(item.hashPrefix())
-      item.toBytesSink(hash)
-      index.toBytesSink(hash)
+      item.toSink(hash)
+      index.toSink(hash)
       return hash.finish()
     }
   } else {

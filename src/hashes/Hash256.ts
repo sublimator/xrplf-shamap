@@ -13,11 +13,11 @@ export class Hash256 implements HashT256 {
     assertLength(buffer, 32, 'Hash256')
   }
 
-  eq(leafIndex: PathIndex): boolean {
+  eq(leafIndex: HashT256): boolean {
     return equalPath(this, leafIndex)
   }
 
-  toBytesSink(sink: BytesSink) {
+  toSink(sink: BytesSink) {
     sink.put(this.buffer)
   }
 
@@ -25,7 +25,7 @@ export class Hash256 implements HashT256 {
     return bytesToHex(this.buffer).toUpperCase()
   }
 
-  nibblet(n: number): number {
+  nibble(n: number): number {
     if (n + 1 > this.nibbles) {
       throw new Error(`indexing out of bounds, ${this.nibbles}[${n}]`)
     }

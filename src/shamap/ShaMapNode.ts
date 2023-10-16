@@ -15,4 +15,3 @@ export abstract class ShaMapNode {
 
   abstract isInner(): this is ShaMapInner
 }
-

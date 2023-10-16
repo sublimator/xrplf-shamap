@@ -16,12 +16,12 @@ export function buildAbbreviatedMap(fromOtherTree: StackToPath): ShaMap {
   }
   const depth = innersLength - 1
 
-  map['_addItem'](leaf.index, { preHashed: leaf.hash() }, depth)
+  map.addItem(leaf.index, { preHashed: leaf.hash() }, depth)
   let currentInner: ShaMapInner = map
   let path: number[] = []
 
   fromOtherTree.inners.forEach(otherInner => {
-    const nibble = leaf.index.nibblet(currentInner.depth)
+    const nibble = leaf.index.nibble(currentInner.depth)
 
     otherInner.eachBranch((sibling, i) => {
       if (i !== nibble && sibling) {

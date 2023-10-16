@@ -20,7 +20,7 @@ export class ShaMap extends ShaMapInner {
           addTo(val as JsonObject, prefix.concat(key))
         } else if (typeof val === 'string') {
           const index = Path.from(prefix.concat(key))
-          map._addItem(index, { preHashed: Hash256.from(val) })
+          map.addItem(index, { preHashed: Hash256.from(val) })
         }
       })
     }
