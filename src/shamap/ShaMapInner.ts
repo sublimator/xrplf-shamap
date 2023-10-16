@@ -6,6 +6,7 @@ import { ShaMapItem } from './ShaMapItem'
 import { Sha512 } from '../hashes/Sha512'
 import { StackToPath } from './StackToPath'
 import { Hash256 } from '../hashes/Hash256'
+import { Trie } from '../proof/proof'
 
 export class ShaMapInner extends ShaMapNode {
   private slotBits = 0
@@ -127,8 +128,8 @@ export class ShaMapInner extends ShaMapNode {
     return { inners: stack }
   }
 
-  trieJSON(): JsonObject {
-    const trie: JsonObject = {}
+  trieJSON(): Trie {
+    const trie: Trie = {}
     this.eachBranch((node, ix) => {
       const nibble = ix.toString(16).toUpperCase()
       if (node) {

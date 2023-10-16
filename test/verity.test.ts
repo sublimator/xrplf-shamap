@@ -46,7 +46,7 @@ describe('Known SHAMap hashes', () => {
   describe.each([ledger38129, ledger40000])(
     'should be able to build an abbreviated tree for any item',
     ledger => {
-      const NUM_TESTS = Infinity
+      const MAX_TESTS = Infinity
 
       let full: ShaMap
       let items: [FullIndex, Hashable][] = ledger.accountState.map(accountItem)
@@ -58,7 +58,7 @@ describe('Known SHAMap hashes', () => {
           full.addItem(index, item)
         }
       })
-      it.each(items.slice(0, NUM_TESTS))(
+      it.each(items.slice(0, MAX_TESTS))(
         `abbreviated tree ledger ${ledger.ledger_index} index-%s`,
         (index, item) => {
           const hash = hashItem(index, item)

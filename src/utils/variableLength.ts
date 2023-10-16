@@ -1,3 +1,5 @@
+import { BytesSink } from '../types'
+
 export function variableLength(length: number): Uint8Array {
   const lenBytes = new Uint8Array(3)
   if (length <= 192) {
@@ -16,4 +18,9 @@ export function variableLength(length: number): Uint8Array {
     return lenBytes.slice(0, 3)
   }
   throw new Error('Overflow error')
+}
+
+export function toSinkVL(sink: BytesSink, tx_blob: Uint8Array) {
+  sink.put(variableLength(tx_blob.length))
+  sink.put(tx_blob)
 }
