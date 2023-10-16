@@ -24,14 +24,14 @@ export function isBytesSinkable(val: object): val is BytesSinkable {
   return TO_BYTES_SINK in val && typeof val[TO_BYTES_SINK] === 'function'
 }
 
-export function isIHash256(val: PathIndex | HashT256): val is HashT256 {
+export function isHashT256(val: PathIndex | HashT256): val is HashT256 {
   return isBytesSinkable(val) && val.nibbles == 64
 }
 
-export function assertsIsIHash256(
+export function assertsIsHashT256(
   val: PathIndex | HashT256
 ): asserts val is HashT256 {
-  if (!isIHash256(val)) {
+  if (!isHashT256(val)) {
     throw new Error(`Expecting hash256, not index`)
   }
 }

@@ -1,8 +1,21 @@
+export type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | JSONArray
+  | JsonObject
+
+export type JSONArray = JSONValue[]
+export type JsonObject = { [key: string]: JSONValue }
+
 export interface BytesSink {
   put(data: Uint8Array): this
 }
 
 export interface BytesSinkable {
+  // TODO: toSink() ;)
   toBytesSink: (sink: BytesSink) => void
 }
 
@@ -17,12 +30,16 @@ export interface PreHashed {
 export interface PathIndex {
   nibbles: number
 
-  nibble(n: number): number
+  nibblet(n: number): number
 
-  toHex(): string
+  eq(leafIndex: PathIndex): boolean
 }
 
-export interface HashT256 extends BytesSinkable, PathIndex {
+export interface Hexed {
+  toHex(): HexString
+}
+
+export interface HashT256 extends BytesSinkable, Hexed, PathIndex {
   nibbles: 64
 }
 

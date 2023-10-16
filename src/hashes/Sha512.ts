@@ -25,6 +25,6 @@ export class Sha512 implements BytesSink {
   }
 
   finish(): HashT256 {
-    return Hash256.fromBytes(this.finish256())
+    return Hash256.from(this.finish256())
   }
 }

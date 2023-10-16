@@ -1,41 +1,28 @@
+import { type HashT256, type PathIndex } from '../types'
+import { type ShaMapInner } from './ShaMapInner'
 import { ShaMapNode } from './ShaMapNode'
-import { HashT256, PathIndex } from '../types'
-import { ShaMapItem } from './ShaMapItem'
-import { Sha512 } from '../hashes/Sha512'
-import { Hash256 } from '../hashes/Hash256'
+import { createItemHashFunc, type ShaMapItem } from './ShaMapItem'
 
 export class ShaMapLeaf extends ShaMapNode {
-  private readonly itemHash: () => HashT256
+  protected readonly calculateHash: () => HashT256
 
   constructor(
     public index: PathIndex,
-    item: ShaMapItem
+    public item: ShaMapItem
   ) {
     super()
-    if ('preHashed' in item) {
-      this.itemHash = () => item.preHashed
-    } else if ('hashPrefix' in item && 'toBytesSink' in item) {
-      this.itemHash = () => {
-        Hash256.assertIsHashT256(index)
-        const hash = Sha512.put(item.hashPrefix())
-        item.toBytesSink(hash)
-        index.toBytesSink(hash)
-        return hash.finish()
-      }
-    } else {
-      throw new Error('invalid_item: must be either Hashable or PreHashed')
-    }
+    this.calculateHash = createItemHashFunc(index, item)
   }
 
   hash(): HashT256 {
-    return this.itemHash()
+    return (this._hash ??= this.calculateHash())
   }
 
-  isLeaf(): boolean {
+  isLeaf(): this is ShaMapLeaf {
     return true
   }
 
-  isInner(): boolean {
+  isInner(): this is ShaMapInner {
     return false
   }
 }
