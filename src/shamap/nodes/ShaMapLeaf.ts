@@ -1,4 +1,4 @@
-import { Hashable, type HashT256, type PathIndex, PreHashed } from '../types'
+import { type HashT256, type PathIndex } from '../../types'
 import { type ShaMapInner } from './ShaMapInner'
 import { ShaMapNode } from './ShaMapNode'
 import { createItemHashFunc, type ShaMapItem } from './ShaMapItem'

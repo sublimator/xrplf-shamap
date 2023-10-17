@@ -1,10 +1,9 @@
-import { ShaMapInner } from './ShaMapInner'
-import { StackToPath } from './StackToPath'
-import { Path } from '../hashes/Path'
-import { BytesSink, FullIndex, HashT256, JsonObject, PathIndex } from '../types'
-import { Hash256 } from '../hashes/Hash256'
-import { BinaryTrieParser } from './binary-trie/BinaryTrieParser'
-import { BRANCH } from './binary-trie/consts'
+import { ShaMapInner, StackToPath } from './ShaMapInner'
+import { Path } from '../../indexes/Path'
+import { BytesSink, FullIndex, HashT256, JsonObject, PathIndex } from '../../types'
+import { Hash256 } from '../../indexes/Hash256'
+import { BinaryTrieParser } from '../binary-trie/BinaryTrieParser'
+import { BRANCH } from '../binary-trie/consts'
 
 export class ShaMap extends ShaMapInner {
   pathToLeaf(leafIndex: FullIndex): StackToPath

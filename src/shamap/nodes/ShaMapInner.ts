@@ -1,15 +1,19 @@
 import { ShaMapNode } from './ShaMapNode'
-import { HashPrefix } from '../hashes/HashPrefix'
-import { BytesSink, HashT256, PathIndex } from '../types'
+import { HashPrefix } from '../../utils/HashPrefix'
+import { BytesSink, HashT256, PathIndex } from '../../types'
 import { ShaMapLeaf } from './ShaMapLeaf'
 import { ShaMapItem } from './ShaMapItem'
-import { Sha512 } from '../hashes/Sha512'
-import { StackToPath } from './StackToPath'
-import { Hash256 } from '../hashes/Hash256'
-import { TrieJson } from '../proof/proof'
-import { BRANCH, BranchType } from './binary-trie/consts'
-import { uint32Bytes } from '../utils/Uint32Bytes'
-import { concatBytes } from '../utils/concatBytes'
+import { Sha512 } from '../../indexes/Sha512'
+import { Hash256 } from '../../indexes/Hash256'
+import { BRANCH, BranchType } from '../binary-trie/consts'
+import { uInt32Bytes } from '../../utils/UInt32Bytes'
+import { concatBytes } from '../../utils/concatBytes'
+import { TrieJson } from '../../proof/types'
+
+export interface StackToPath {
+  leaf?: ShaMapLeaf
+  inners: ShaMapInner[]
+}
 
 export class ShaMapInner extends ShaMapNode {
   private slotBits = 0
@@ -185,6 +189,6 @@ export class ShaMapInner extends ShaMapNode {
       }
       nodeHeader |= type << (i * 2)
     })
-    return uint32Bytes(nodeHeader)
+    return uInt32Bytes(nodeHeader)
   }
 }

@@ -1,26 +1,12 @@
 import { Hashable, HashT256 } from '../types'
-import { ShaMap } from '../shamap/ShaMap'
-import { HashPrefix } from '../hashes/HashPrefix'
-import { transactionID } from '../hashes'
+import { ShaMap } from '../shamap/nodes/ShaMap'
+import { HashPrefix } from '../utils/HashPrefix'
+import { transactionID } from '../utils/hashes'
 import { toSinkVL } from '../utils/variableLength'
 import { buildAbbreviatedMap } from '../shamap/abbrev/buildAbbreviated'
-import { hashItem } from '../shamap/ShaMapItem'
+import { hashItem } from '../shamap/nodes/ShaMapItem'
 import { ensureBytes } from '../utils/ensureBytes'
-
-export interface Transaction {
-  meta: string | Uint8Array
-  tx_blob: string | Uint8Array
-}
-
-export type TrieJson = { [key: string]: string | TrieJson }
-export type Trie = Uint8Array | TrieJson
-export type TxId = string
-
-export interface TxProofs {
-  treeHash: string // per xrpl ledger transaction_hash
-  allTx: Trie
-  perTx: Record<TxId, { trie: Trie }>
-}
+import { Transaction, Trie, TxProofs } from './types'
 
 export function transactionItemizer(tx: Transaction) {
   const tx_blob = ensureBytes(tx.tx_blob)

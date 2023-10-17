@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals'
 
-import { Path } from './Path'
+import { Path } from '../src/indexes/Path'
 
 describe('Path class', () => {
   let buffer: number[]

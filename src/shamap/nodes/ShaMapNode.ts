@@ -1,4 +1,4 @@
-import { HashT256 } from '../types'
+import { HashT256 } from '../../types'
 import { type ShaMapLeaf } from './ShaMapLeaf'
 import { type ShaMapInner } from './ShaMapInner'
 

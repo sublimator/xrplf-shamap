@@ -1,15 +1,15 @@
 import { describe, expect, it } from '@jest/globals'
 import {
-  Transaction,
   checkTxProofTrie,
   createTxProofs
-} from '../src/proof/proof'
+} from '../src/proof/TxProofs'
 
 import ledger1 from './ledger-testnet-binary-42089779.json'
 import ledger2 from './ledger-binary-83258110.json'
 
-import { transactionID } from '../src/hashes'
+import { transactionID } from '../src/utils/hashes'
 import { hexToBytes } from '@noble/hashes/utils'
+import { Transaction } from '../src/proof/types'
 
 const ledgers = [ledger1, ledger2]
 describe.each(ledgers)('proof', ledger => {

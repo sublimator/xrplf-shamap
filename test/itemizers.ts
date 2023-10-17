@@ -1,8 +1,8 @@
 import { FullIndex, Hashable } from '../src/types'
-import { HashPrefix } from '../src/hashes/HashPrefix'
+import { HashPrefix } from '../src/utils/HashPrefix'
 import { STObject } from 'ripple-binary-codec/dist/types/st-object'
 import { BinarySerializer, BytesList } from 'ripple-binary-codec/dist/binary'
-import { Hash256 } from '../src/hashes/Hash256'
+import { Hash256 } from '../src/indexes/Hash256'
 
 export const accountItem = (t: { index: string }) => {
   const index = Hash256.from(t.index)

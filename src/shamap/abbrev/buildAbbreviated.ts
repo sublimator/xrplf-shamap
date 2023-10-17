@@ -1,8 +1,8 @@
-import { StackToPath } from '../StackToPath'
-import { ShaMapInner } from '../ShaMapInner'
-import { ShaMapLeaf } from '../ShaMapLeaf'
-import { Path } from '../../hashes/Path'
-import { ShaMap } from '../ShaMap'
+
+import { ShaMapInner, StackToPath } from '../nodes/ShaMapInner'
+import { ShaMapLeaf } from '../nodes/ShaMapLeaf'
+import { Path } from '../../indexes/Path'
+import { ShaMap } from '../nodes/ShaMap'
 
 export function buildAbbreviatedMap(fromOtherTree: StackToPath): ShaMap {
   const map = new ShaMap()

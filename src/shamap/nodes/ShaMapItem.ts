@@ -1,6 +1,6 @@
-import { Hashable, PathIndex, PreHashed } from '../types'
-import { Sha512 } from '../hashes/Sha512'
-import { Hash256 } from '../hashes/Hash256'
+import { Hashable, PathIndex, PreHashed } from '../../types'
+import { Sha512 } from '../../indexes/Sha512'
+import { Hash256 } from '../../indexes/Hash256'
 
 export type ShaMapItem = Hashable | PreHashed
 

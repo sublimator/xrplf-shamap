@@ -1,4 +1,4 @@
-import { Hash256 } from '../../hashes/Hash256'
+import { Hash256 } from '../../indexes/Hash256'
 import { BranchType } from './consts'
 
 export class BinaryTrieParser {

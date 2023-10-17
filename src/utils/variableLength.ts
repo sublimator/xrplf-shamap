@@ -20,7 +20,7 @@ export function variableLength(length: number): Uint8Array {
   throw new Error('Overflow error')
 }
 
-export function toSinkVL(sink: BytesSink, tx_blob: Uint8Array) {
-  sink.put(variableLength(tx_blob.length))
-  sink.put(tx_blob)
+export function toSinkVL(sink: BytesSink, blob: Uint8Array) {
+  sink.put(variableLength(blob.length))
+  sink.put(blob)
 }
