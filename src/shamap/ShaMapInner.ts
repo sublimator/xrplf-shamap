@@ -64,7 +64,9 @@ export class ShaMapInner extends ShaMapNode {
   }
 
   hasHashed(index: PathIndex, hash: HashT256) {
-    return Boolean(this._findPathToLeaf(index, hash).leaf)
+    const leaf = this._findPathToLeaf(index, hash).leaf
+    // We've already checked, but can't hurt too much to check twice!
+    return Boolean(leaf?.hash().eq(hash))
   }
 
   addItem(index: PathIndex, item: ShaMapItem, depth = 0): void {
@@ -113,7 +115,7 @@ export class ShaMapInner extends ShaMapNode {
     if (target.isLeaf()) {
       if (
         (leafHash && target.hash().eq(leafHash)) ||
-        target.index.eq(leafIndex)
+        (!leafHash && target.index.eq(leafIndex))
       ) {
         return { leaf: target, inners: [...stack, this] }
       }
