@@ -24,6 +24,6 @@ export function assertLength<N extends number>(
   name: string
 ): asserts val is { length: N } {
   if (val.length !== length) {
-    throw new Error(`expected length=${length} for ${name}`)
+    throw new Error(`expected length=${length} for ${name}, got ${val.length}`)
   }
 }

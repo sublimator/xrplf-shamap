@@ -16,12 +16,13 @@ export type Trie = { [key: string]: string | Trie }
 
 interface TxProofs {
   fullTrie: Trie
-  tries: Record<string, { trie: Trie; saving: number }>
-  // matches ledger transaction hash
+  saving?: number
+  tries: Record<string, { trie: Trie; saving?: number }>
+  // matches ledger transaction_hash
   transaction_hash: string
 }
 
-function itemIzer(tx: Transaction) {
+export function transactionItemizer(tx: Transaction) {
   const tx_blob = hexToBytes(tx.tx_blob)
   const meta = hexToBytes(tx.meta)
   const id = transactionID(tx_blob)
@@ -35,9 +36,17 @@ function itemIzer(tx: Transaction) {
   return [id, hashable] as [HashT256, Hashable]
 }
 
-export function createProofs(transactions: Transaction[]): TxProofs {
+interface TxProofs1 {
+  transactions: Transaction[]
+  calculateSavings?: boolean
+}
+
+export function createTxProofs({
+  transactions,
+  calculateSavings = false
+}: TxProofs1): TxProofs {
   const map = new ShaMap()
-  const items = transactions.map(itemIzer)
+  const items = transactions.map(transactionItemizer)
   for (const [index, item] of items) {
     map.addItem(index, item)
   }
@@ -45,6 +54,11 @@ export function createProofs(transactions: Transaction[]): TxProofs {
   const proofs: TxProofs['tries'] = {}
   const fullTrie = map.trieJSON()
   const total = JSON.stringify(fullTrie).length
+  const saving = !calculateSavings
+    ? undefined
+    : transactions.length *
+        (64 + 64 + JSON.stringify({ key: '', hash: '' }).length) -
+      total
 
   items.forEach(([index]) => {
     const path = map.pathToLeaf(index)
@@ -54,13 +68,22 @@ export function createProofs(transactions: Transaction[]): TxProofs {
     const abbrev = buildAbbreviatedMap(path)
     const trie = abbrev.trieJSON()
     const tx_id = index.toHex()
-    proofs[tx_id] = { trie, saving: total - JSON.stringify(trie).length }
+    proofs[tx_id] = {
+      trie,
+      saving: !calculateSavings
+        ? undefined
+        : total - JSON.stringify(trie).length
+    }
   })
-  return { transaction_hash: tx_hash, tries: proofs, fullTrie }
+  return { saving, transaction_hash: tx_hash, tries: proofs, fullTrie }
 }
 
-export function checkProof(tx: Transaction, trie: Trie, treeHash: string) {
-  const [index, item] = itemIzer(tx)
+export function checkTxProofTrie(
+  tx: Transaction,
+  trie: Trie,
+  treeHash: string
+) {
+  const [index, item] = transactionItemizer(tx)
   const hash = hashItem(index, item)
   const abbrev = ShaMap.fromTrieJSON(trie)
   return abbrev.hasHashed(index, hash) && abbrev.hash().toHex() === treeHash

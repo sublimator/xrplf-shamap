@@ -138,4 +138,41 @@ export class ShaMapInner extends ShaMapNode {
     })
     return trie
   }
+
+  trieBinary(sink: BytesSink) {
+    const header = this.headerBytes()
+    sink.put(header)
+
+    this.eachBranch((node, ix) => {
+      if (node) {
+        if (node.isInner()) {
+          node.trieBinary(sink)
+        } else if (node.isLeaf()) {
+          node.hash().toSink(sink)
+        }
+      }
+    })
+  }
+
+  headerBytes() {
+    let nodeHeader = 0
+    this.eachBranch((n, i) => {
+      if (n) {
+        nodeHeader |= 1 << i
+        if (n.isInner()) {
+          nodeHeader |= 1 << (i + 16)
+        }
+      }
+    })
+    const headerBytes = new Uint8Array(4)
+    const view = new DataView(headerBytes.buffer)
+    if (nodeHeader > 2 ** 32 - 1) {
+      throw new Error()
+    }
+    view.setUint32(0, nodeHeader)
+    if (view.getUint32(0) !== nodeHeader) {
+      throw new Error()
+    }
+    return headerBytes
+  }
 }
