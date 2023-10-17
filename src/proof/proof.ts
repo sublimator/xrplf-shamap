@@ -1,4 +1,3 @@
-import { hexToBytes } from '@noble/hashes/utils'
 import { Hashable, HashT256 } from '../types'
 import { ShaMap } from '../shamap/ShaMap'
 import { HashPrefix } from '../hashes/HashPrefix'
@@ -6,26 +5,26 @@ import { transactionID } from '../hashes'
 import { toSinkVL } from '../utils/variableLength'
 import { buildAbbreviatedMap } from '../shamap/abbrev/buildAbbreviated'
 import { hashItem } from '../shamap/ShaMapItem'
+import { ensureBytes } from '../utils/ensureBytes'
 
 export interface Transaction {
-  meta: string
-  tx_blob: string
+  meta: string | Uint8Array
+  tx_blob: string | Uint8Array
 }
 
 export type TrieJson = { [key: string]: string | TrieJson }
 export type Trie = Uint8Array | TrieJson
+export type TxId = string
 
 interface TxProofs {
-  fullTrie: Trie
-  saving?: number
-  tries: Record<string, { trie: Trie; saving?: number }>
-  // matches ledger transaction_hash
-  transaction_hash: string
+  treeHash: string // per xrpl ledger transaction_hash
+  allTx: Trie
+  perTx: Record<TxId, { trie: Trie }>
 }
 
 export function transactionItemizer(tx: Transaction) {
-  const tx_blob = hexToBytes(tx.tx_blob)
-  const meta = hexToBytes(tx.meta)
+  const tx_blob = ensureBytes(tx.tx_blob)
+  const meta = ensureBytes(tx.meta)
   const id = transactionID(tx_blob)
   const hashable: Hashable = {
     hashPrefix: () => HashPrefix.transaction,
@@ -51,9 +50,9 @@ export function createTxProofs({
   for (const [index, item] of items) {
     map.addItem(index, item)
   }
-  const tx_hash = map.hash().toHex()
-  const proofs: TxProofs['tries'] = {}
-  const fullTrie = binary ? map.trieBinary() : map.trieJSON()
+  const treeHash = map.hash().toHex()
+  const allTx = binary ? map.trieBinary() : map.trieJSON()
+  const perTx: TxProofs['perTx'] = {}
 
   items.forEach(([index]) => {
     const path = map.pathToLeaf(index)
@@ -62,12 +61,16 @@ export function createTxProofs({
     }
     const abbrev = buildAbbreviatedMap(path)
     const trie = binary ? abbrev.trieBinary() : abbrev.trieJSON()
-    const tx_id = index.toHex()
-    proofs[tx_id] = {
+    const txId = index.toHex()
+    perTx[txId] = {
       trie
     }
   })
-  return { transaction_hash: tx_hash, tries: proofs, fullTrie }
+  return {
+    treeHash: treeHash,
+    perTx: perTx,
+    allTx: allTx
+  }
 }
 
 export function checkTxProofTrie(

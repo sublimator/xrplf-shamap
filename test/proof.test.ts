@@ -16,11 +16,10 @@ describe.each(ledgers)('proof', ledger => {
   describe.each([true, false])('binary %s', binary => {
     const proofs = createTxProofs({
       transactions: ledger.transactions,
-      calculateSavings: true,
       binary
     })
 
-    const tries = proofs.tries
+    const tries = proofs.perTx
     const txs: [string, Transaction][] = ledger.transactions.map(tx => {
       const id = transactionID(hexToBytes(tx.tx_blob)).toHex()
       return [id, tx]
