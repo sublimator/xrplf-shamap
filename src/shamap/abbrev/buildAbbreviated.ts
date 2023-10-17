@@ -1,4 +1,3 @@
-
 import { ShaMapInner, StackToPath } from '../nodes/ShaMapInner'
 import { ShaMapLeaf } from '../nodes/ShaMapLeaf'
 import { Path } from '../../indexes/Path'
