@@ -30,6 +30,7 @@ export default ({
     {
       ...tsJestPreset,
       displayName: 'ts-jest',
+      snapshotSerializers: ["<rootDir>/test/snapshots.js"],
       transform,
       prettierPath,
       extensionsToTreatAsEsm: useESM ? ['.ts'] : undefined,

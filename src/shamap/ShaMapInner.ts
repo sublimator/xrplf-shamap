@@ -6,7 +6,7 @@ import { ShaMapItem } from './ShaMapItem'
 import { Sha512 } from '../hashes/Sha512'
 import { StackToPath } from './StackToPath'
 import { Hash256 } from '../hashes/Hash256'
-import { Trie } from '../proof/proof'
+import { TrieJson } from '../proof/proof'
 import { BRANCH, BranchType } from './binary-trie/consts'
 import { uint32Bytes } from '../utils/Uint32Bytes'
 import { concatBytes } from '../utils/concatBytes'
@@ -127,8 +127,8 @@ export class ShaMapInner extends ShaMapNode {
     return { inners: stack }
   }
 
-  trieJSON(): Trie {
-    const trie: Trie = {}
+  trieJSON(): TrieJson {
+    const trie: TrieJson = {}
     this.eachBranch((node, ix) => {
       const nibble = ix.toString(16).toUpperCase()
       if (node) {

@@ -1,8 +1,8 @@
+import { hexToBytes } from '@noble/hashes/utils'
 import { Hashable, HashT256 } from '../types'
 import { ShaMap } from '../shamap/ShaMap'
 import { HashPrefix } from '../hashes/HashPrefix'
 import { transactionID } from '../hashes'
-import { hexToBytes } from '@noble/hashes/utils'
 import { toSinkVL } from '../utils/variableLength'
 import { buildAbbreviatedMap } from '../shamap/abbrev/buildAbbreviated'
 import { hashItem } from '../shamap/ShaMapItem'
@@ -12,7 +12,8 @@ export interface Transaction {
   tx_blob: string
 }
 
-export type Trie = { [key: string]: string | Trie }
+export type TrieJson = { [key: string]: string | TrieJson }
+export type Trie = Uint8Array | TrieJson
 
 interface TxProofs {
   fullTrie: Trie
@@ -38,12 +39,12 @@ export function transactionItemizer(tx: Transaction) {
 
 interface TxProofs1 {
   transactions: Transaction[]
-  calculateSavings?: boolean
+  binary?: boolean
 }
 
 export function createTxProofs({
   transactions,
-  calculateSavings = false
+  binary = false
 }: TxProofs1): TxProofs {
   const map = new ShaMap()
   const items = transactions.map(transactionItemizer)
@@ -52,13 +53,7 @@ export function createTxProofs({
   }
   const tx_hash = map.hash().toHex()
   const proofs: TxProofs['tries'] = {}
-  const fullTrie = map.trieJSON()
-  const total = JSON.stringify(fullTrie).length
-  const saving = !calculateSavings
-    ? undefined
-    : transactions.length *
-        (64 + 64 + JSON.stringify({ key: '', hash: '' }).length) -
-      total
+  const fullTrie = binary ? map.trieBinary() : map.trieJSON()
 
   items.forEach(([index]) => {
     const path = map.pathToLeaf(index)
@@ -66,16 +61,13 @@ export function createTxProofs({
       throw new Error()
     }
     const abbrev = buildAbbreviatedMap(path)
-    const trie = abbrev.trieJSON()
+    const trie = binary ? abbrev.trieBinary() : abbrev.trieJSON()
     const tx_id = index.toHex()
     proofs[tx_id] = {
-      trie,
-      saving: !calculateSavings
-        ? undefined
-        : total - JSON.stringify(trie).length
+      trie
     }
   })
-  return { saving, transaction_hash: tx_hash, tries: proofs, fullTrie }
+  return { transaction_hash: tx_hash, tries: proofs, fullTrie }
 }
 
 export function checkTxProofTrie(
@@ -85,6 +77,11 @@ export function checkTxProofTrie(
 ) {
   const [index, item] = transactionItemizer(tx)
   const hash = hashItem(index, item)
-  const abbrev = ShaMap.fromTrieJSON(trie)
+  let abbrev: ShaMap
+  if (trie instanceof Uint8Array) {
+    abbrev = ShaMap.fromTrieBinary(trie)
+  } else {
+    abbrev = ShaMap.fromTrieJSON(trie)
+  }
   return abbrev.hasHashed(index, hash) && abbrev.hash().toHex() === treeHash
 }
