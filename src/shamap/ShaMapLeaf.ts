@@ -1,4 +1,4 @@
-import { type HashT256, type PathIndex, PreHashed } from '../types'
+import { Hashable, type HashT256, type PathIndex, PreHashed } from '../types'
 import { type ShaMapInner } from './ShaMapInner'
 import { ShaMapNode } from './ShaMapNode'
 import { createItemHashFunc, type ShaMapItem } from './ShaMapItem'
@@ -22,7 +22,11 @@ export class ShaMapLeaf extends ShaMapNode {
     return false
   }
 
-  isPreHashed(): this is PreHashed {
+  hasPreHashed(): boolean {
     return 'preHashed' in this.item
+  }
+
+  hasHashable(): boolean {
+    return !this.hasPreHashed()
   }
 }

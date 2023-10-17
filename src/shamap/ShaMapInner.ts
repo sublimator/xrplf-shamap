@@ -149,7 +149,7 @@ export class ShaMapInner extends ShaMapNode {
         if (node.isInner()) {
           node.sinkTrieBinary(sink, abbrev)
         } else if (node.isLeaf()) {
-          if (abbrev || node.isPreHashed()) {
+          if (abbrev || node.hasPreHashed()) {
             node.hash().toSink(sink)
           } else {
             throw new Error('R.F.U')
@@ -180,7 +180,7 @@ export class ShaMapInner extends ShaMapNode {
         if (n.isInner()) {
           type = BRANCH.inner
         } else if (n.isLeaf()) {
-          type = abbrev || n.isPreHashed() ? BRANCH.preHashed : BRANCH.item
+          type = abbrev || n.hasPreHashed() ? BRANCH.preHashed : BRANCH.item
         }
       }
       nodeHeader |= type << (i * 2)
