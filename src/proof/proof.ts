@@ -4,7 +4,7 @@ import { HashPrefix } from '../hashes/HashPrefix'
 import { transactionID } from '../hashes'
 import { hexToBytes } from '@noble/hashes/utils'
 import { toSinkVL } from '../utils/variableLength'
-import { buildAbbreviatedMap } from '../shamap/buildAbbreviated'
+import { buildAbbreviatedMap } from '../shamap/abbrev/buildAbbreviated'
 import { hashItem } from '../shamap/ShaMapItem'
 
 export interface Transaction {

@@ -7,7 +7,9 @@ import { Sha512 } from '../hashes/Sha512'
 import { StackToPath } from './StackToPath'
 import { Hash256 } from '../hashes/Hash256'
 import { Trie } from '../proof/proof'
-import { BRANCH, BranchType } from './consts'
+import { BRANCH, BranchType } from './binary-trie/consts'
+import { uint32Bytes } from '../utils/Uint32Bytes'
+import { concatBytes } from '../utils/concatBytes'
 
 export class ShaMapInner extends ShaMapNode {
   private slotBits = 0
@@ -136,24 +138,35 @@ export class ShaMapInner extends ShaMapNode {
     return trie
   }
 
-  trieBinary(sink: BytesSink, abbrev: boolean = true) {
+  sinkTrieBinary(sink: BytesSink, abbrev: boolean = true) {
     const header = this.trieBranchesHeader(abbrev)
     sink.put(header)
 
     this.eachBranch((node, ix) => {
       if (node) {
         if (node.isInner()) {
-          node.trieBinary(sink, abbrev)
+          node.sinkTrieBinary(sink, abbrev)
         } else if (node.isLeaf()) {
-          if (abbrev) {
+          if (abbrev || node.isPreHashed()) {
             node.hash().toSink(sink)
           } else {
-            // TODO: vlEncode ?
-            throw new Error('unimplemented handling for full item')
+            throw new Error('R.F.U')
           }
         }
       }
     })
+  }
+
+  trieBinary(abbrev = true) {
+    const buffers: Uint8Array[] = []
+    const sink: BytesSink = {
+      put(buf: Uint8Array) {
+        buffers.push(buf)
+        return this
+      }
+    }
+    this.sinkTrieBinary(sink, abbrev)
+    return concatBytes(buffers)
   }
 
   trieBranchesHeader(abbrev = true) {
@@ -165,24 +178,11 @@ export class ShaMapInner extends ShaMapNode {
         if (n.isInner()) {
           type = BRANCH.inner
         } else if (n.isLeaf()) {
-          type =
-            abbrev || 'preHashed' in n.item ? BRANCH.preHashed : BRANCH.item
+          type = abbrev || n.isPreHashed() ? BRANCH.preHashed : BRANCH.item
         }
       }
       nodeHeader |= type << (i * 2)
     })
-    // nodeHeader >>>= 0
-
-    const headerBytes = new Uint8Array(4)
-    const view = new DataView(headerBytes.buffer)
-    // if (nodeHeader > 2 ** 32 - 1) {
-    //   throw new Error()
-    // }
-    view.setUint32(0, nodeHeader)
-    // const check = view.getUint32(0)
-    // if (check !== nodeHeader) {
-    //   throw new Error(`${check} !== ${nodeHeader}`)
-    // }
-    return headerBytes
+    return uint32Bytes(nodeHeader)
   }
 }

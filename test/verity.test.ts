@@ -6,12 +6,12 @@ import { BytesSink, FullIndex, Hashable } from '../src/types'
 import { ShaMap } from '../src/shamap/ShaMap'
 import { hashItem } from '../src/shamap/ShaMapItem'
 import { accountItem, txItem } from './itemizers'
-import { buildAbbreviatedMap } from '../src/shamap/buildAbbreviated'
+import { buildAbbreviatedMap } from '../src/shamap/abbrev/buildAbbreviated'
 import ledger1 from './ledger-testnet-binary-42089779.json'
 import ledger2 from './ledger-binary-83258110.json'
 
 import { transactionItemizer } from '../src/proof/proof'
-import { BinaryParser } from '../src/shamap/BinaryParser'
+import { BinaryTrieParser } from '../src/shamap/binary-trie/BinaryTrieParser'
 import { ShaMapInner } from '../src/shamap/ShaMapInner'
 import { ShaMapLeaf } from '../src/shamap/ShaMapLeaf'
 import { Path } from '../src/hashes/Path'
@@ -168,16 +168,16 @@ describe('should be able produce binary tries - transactions', () => {
         return this
       }
     }
-    map.trieBinary(sink)
+    map.sinkTrieBinary(sink)
     const trie = Buffer.concat(buffers)
     expect(trie.length).toBe(4 + 10 * 32)
     expect(
       Buffer.from(trie.subarray(0, 4)).readUint32BE(0).toString(2)
     ).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
-    expect(new BinaryParser(trie).uint32().toString(2)).toMatchInlineSnapshot(
-      `"10001010100010000000101010100010"`
-    )
-    const parser = new BinaryParser(trie)
+    expect(
+      new BinaryTrieParser(trie).uint32().toString(2)
+    ).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
+    const parser = new BinaryTrieParser(trie)
     expect(Array.from(parser.trieHeader())).toMatchInlineSnapshot(`
       [
         [
@@ -298,19 +298,6 @@ describe('should be able produce binary tries - transactions', () => {
   })
 })
 
-function getBinaryTrie(map: ShaMap, abbrev = true) {
-  const buffers: Uint8Array[] = []
-  const sink: BytesSink = {
-    put(buf: Uint8Array) {
-      // console.log('buf', buf.length)
-      buffers.push(buf)
-      return this
-    }
-  }
-  map.trieBinary(sink, abbrev)
-  return Buffer.concat(buffers)
-}
-
 describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_index}`, () => {
   let items: [FullIndex, Hashable][]
   const expectedHash: string = ledger2.header.transaction_hash
@@ -329,7 +316,7 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
     expect(items.length).toBe(40)
     expect(JSON.stringify(map.trieJSON()).length).toMatchInlineSnapshot(`2925`)
 
-    const trie = getBinaryTrie(map) //
+    const trie = map.trieBinary() //
     expect(trie.length).toMatchInlineSnapshot(`1340`)
     const retrie = ShaMap.fromTrieBinary(trie)
     expect(retrie.trieJSON()).toMatchInlineSnapshot(`
@@ -407,7 +394,7 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
     expect(retrie.hash().toHex()).toBe(expectedHash)
 
     const abbrevLeaf = items[14][0]
-    const bin = getBinaryTrie(buildAbbreviatedMap(map.pathToLeaf(abbrevLeaf)))
+    const bin = buildAbbreviatedMap(map.pathToLeaf(abbrevLeaf)).trieBinary()
     expect(bin.length).toMatchInlineSnapshot(`520`)
     expect(ShaMap.fromTrieBinary(bin).hash().toHex()).toBe(expectedHash)
   })
@@ -428,7 +415,7 @@ describe('Trie headers', () => {
     expect(num.toString(2)).toMatchInlineSnapshot(
       `"1000000000000000000000000000000"`
     )
-    const parser = new BinaryParser(header)
+    const parser = new BinaryTrieParser(header)
     expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
       `"1000000000000000000000000000000"`
     )
@@ -517,7 +504,7 @@ describe('Trie headers', () => {
     expect(num.toString(2)).toMatchInlineSnapshot(
       `"11000000000000000000000000000000"`
     )
-    const parser = new BinaryParser(header)
+    const parser = new BinaryTrieParser(header)
     expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
       `"11000000000000000000000000000000"`
     )

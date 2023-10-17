@@ -1,7 +1,7 @@
-import { Hash256 } from '../hashes/Hash256'
+import { Hash256 } from '../../hashes/Hash256'
 import { BranchType } from './consts'
 
-export class BinaryParser {
+export class BinaryTrieParser {
   offset = 0
 
   constructor(private buf: Uint8Array) {}
