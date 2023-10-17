@@ -66,11 +66,9 @@ export function checkTxProofTrie(
 ) {
   const [index, item] = transactionItemizer(tx)
   const hash = hashItem(index, item)
-  let abbrev: ShaMap
-  if (trie instanceof Uint8Array) {
-    abbrev = ShaMap.fromTrieBinary(trie)
-  } else {
-    abbrev = ShaMap.fromTrieJSON(trie)
-  }
+  const abbrev =
+    trie instanceof Uint8Array
+      ? ShaMap.fromTrieBinary(trie)
+      : ShaMap.fromTrieJSON(trie)
   return abbrev.hasHashed(index, hash) && abbrev.hash().toHex() === treeHash
 }
