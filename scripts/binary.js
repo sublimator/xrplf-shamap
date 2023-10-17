@@ -4,17 +4,17 @@ async function getLedgerData() {
   // Create a client instance
   const testNet = false
   const server = testNet
-    ? 'wss://s.altnet.rippletest.net:51233'
-    : 'wss://s1.ripple.com:443'
+    ? 's.altnet.rippletest.net:51233'
+    : 's1.ripple.com:443'
 
   const ledgerIndex = Number(process.argv[2] ?? 0) || 'validated'
-  const client = new xrpl.Client(server)
+  const client = new xrpl.Client(`wss://${server}`)
 
   try {
     // Connect to the client
     await client.connect()
 
-    const json = {}
+    const json = {server}
 
     for (const getTx of [true, false]) {
       // Make a request to get the ledger

@@ -1,8 +1,5 @@
 import { describe, expect, it } from '@jest/globals'
-import {
-  checkTxProofTrie,
-  createTxProofs
-} from '../src/proof/TxProofs'
+import { checkTxProofTrie, createTxProofs } from '../src/proof/TxProofs'
 
 import ledger1 from './ledger-testnet-binary-42089779.json'
 import ledger2 from './ledger-binary-83258110.json'
@@ -10,8 +7,10 @@ import ledger2 from './ledger-binary-83258110.json'
 import { transactionID } from '../src/utils/hashes'
 import { hexToBytes } from '@noble/hashes/utils'
 import { Transaction } from '../src/proof/types'
+import { ledgerIdent } from './utils/ledgerIdent'
 
 const ledgers = [ledger1, ledger2]
+
 describe.each(ledgers)('proof', ledger => {
   describe.each([true, false])('binary %s', binary => {
     const proofs = createTxProofs({
@@ -28,7 +27,7 @@ describe.each(ledgers)('proof', ledger => {
     expect(proofs).toMatchSnapshot()
 
     it.each(txs)(
-      `should create a proof for ${ledger.header.ledger_index} %s`,
+      `should create a proof for ${ledgerIdent(ledger)}/%s`,
       (id, tx) => {
         const proof = tries[id]
         const trie = proof.trie
