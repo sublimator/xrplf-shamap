@@ -14,10 +14,6 @@ export class ShaMapLeaf extends ShaMapNode {
     this.calculateHash = createItemHashFunc(index, item)
   }
 
-  hash(): HashT256 {
-    return (this._hash ??= this.calculateHash())
-  }
-
   isLeaf(): this is ShaMapLeaf {
     return true
   }

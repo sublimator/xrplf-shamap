@@ -3,7 +3,8 @@ import { StackToPath } from './StackToPath'
 import { Path } from '../hashes/Path'
 import { FullIndex, HashT256, JsonObject, PathIndex } from '../types'
 import { Hash256 } from '../hashes/Hash256'
-import { TrieParser } from './TrieParser'
+import { BinaryParser } from './BinaryParser'
+import { BRANCH } from './consts'
 
 export class ShaMap extends ShaMapInner {
   pathToLeaf(leafIndex: FullIndex): StackToPath
@@ -32,15 +33,15 @@ export class ShaMap extends ShaMapInner {
 
   static fromTrieBinary(trie: Uint8Array): ShaMap {
     const map = new ShaMap()
-    const parser = new TrieParser(trie)
+    const parser = new BinaryParser(trie)
 
     function parse(node: ShaMapInner, path: number[]) {
-      for (const [i, empty, inner] of parser.parsedHeader()) {
-        if (inner) {
+      for (const [i, type] of parser.trieHeader()) {
+        if (type === BRANCH.inner) {
           const newInner = new ShaMapInner(node.depth + 1)
           node.setBranch(i, newInner)
           parse(newInner, path.concat(i))
-        } else if (!empty) {
+        } else if (type === BRANCH.preHashed || type === BRANCH.item) {
           const index = Path.from(path.concat(i))
           map.addItem(index, { preHashed: parser.hash() })
         }

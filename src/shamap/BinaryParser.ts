@@ -1,21 +1,21 @@
 import { Hash256 } from '../hashes/Hash256'
+import { BranchType } from './consts'
 
-export class TrieParser {
+export class BinaryParser {
   offset = 0
 
   constructor(private buf: Uint8Array) {}
 
-  header() {
+  uint32() {
     const buf = this.readN(4)
     return new DataView(buf.buffer, buf.byteOffset, 4).getUint32(0)
   }
 
-  *parsedHeader(): Generator<[i: number, empty: boolean, inner: boolean]> {
-    const header = this.header()
+  *trieHeader(): Generator<[number, BranchType]> {
+    const header = this.uint32()
     for (let i = 0; i < 16; i++) {
-      const empty = (header & (1 << i)) === 0
-      const inner = (header & (1 << (i + 16))) !== 0
-      yield [i, empty, inner]
+      const type = header & (0b11 << (i * 2))
+      yield [i, (type >>> (i * 2)) as BranchType]
     }
   }
 

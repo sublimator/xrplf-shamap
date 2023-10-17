@@ -1,12 +1,13 @@
 import { ShaMapNode } from './ShaMapNode'
 import { HashPrefix } from '../hashes/HashPrefix'
-import { BytesSink, HashT256, JsonObject, PathIndex } from '../types'
+import { BytesSink, HashT256, PathIndex } from '../types'
 import { ShaMapLeaf } from './ShaMapLeaf'
 import { ShaMapItem } from './ShaMapItem'
 import { Sha512 } from '../hashes/Sha512'
 import { StackToPath } from './StackToPath'
 import { Hash256 } from '../hashes/Hash256'
 import { Trie } from '../proof/proof'
+import { BRANCH, BranchType } from './consts'
 
 export class ShaMapInner extends ShaMapNode {
   private slotBits = 0
@@ -41,10 +42,6 @@ export class ShaMapInner extends ShaMapNode {
 
   empty(): boolean {
     return this.slotBits === 0
-  }
-
-  hash(): HashT256 {
-    return (this._hash ??= this.calculateHash())
   }
 
   protected calculateHash() {
@@ -139,40 +136,53 @@ export class ShaMapInner extends ShaMapNode {
     return trie
   }
 
-  trieBinary(sink: BytesSink) {
-    const header = this.headerBytes()
+  trieBinary(sink: BytesSink, abbrev: boolean = true) {
+    const header = this.trieBranchesHeader(abbrev)
     sink.put(header)
 
     this.eachBranch((node, ix) => {
       if (node) {
         if (node.isInner()) {
-          node.trieBinary(sink)
+          node.trieBinary(sink, abbrev)
         } else if (node.isLeaf()) {
-          node.hash().toSink(sink)
+          if (abbrev) {
+            node.hash().toSink(sink)
+          } else {
+            // TODO: vlEncode ?
+            throw new Error('unimplemented handling for full item')
+          }
         }
       }
     })
   }
 
-  headerBytes() {
+  trieBranchesHeader(abbrev = true) {
     let nodeHeader = 0
     this.eachBranch((n, i) => {
+      let type: BranchType = BRANCH.empty
+
       if (n) {
-        nodeHeader |= 1 << i
         if (n.isInner()) {
-          nodeHeader |= 1 << (i + 16)
+          type = BRANCH.inner
+        } else if (n.isLeaf()) {
+          type =
+            abbrev || 'preHashed' in n.item ? BRANCH.preHashed : BRANCH.item
         }
       }
+      nodeHeader |= type << (i * 2)
     })
+    // nodeHeader >>>= 0
+
     const headerBytes = new Uint8Array(4)
     const view = new DataView(headerBytes.buffer)
-    if (nodeHeader > 2 ** 32 - 1) {
-      throw new Error()
-    }
+    // if (nodeHeader > 2 ** 32 - 1) {
+    //   throw new Error()
+    // }
     view.setUint32(0, nodeHeader)
-    if (view.getUint32(0) !== nodeHeader) {
-      throw new Error()
-    }
+    // const check = view.getUint32(0)
+    // if (check !== nodeHeader) {
+    //   throw new Error(`${check} !== ${nodeHeader}`)
+    // }
     return headerBytes
   }
 }

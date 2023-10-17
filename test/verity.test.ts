@@ -11,7 +11,10 @@ import ledger1 from './ledger-testnet-binary-42089779.json'
 import ledger2 from './ledger-binary-83258110.json'
 
 import { transactionItemizer } from '../src/proof/proof'
-import { TrieParser } from '../src/shamap/TrieParser'
+import { BinaryParser } from '../src/shamap/BinaryParser'
+import { ShaMapInner } from '../src/shamap/ShaMapInner'
+import { ShaMapLeaf } from '../src/shamap/ShaMapLeaf'
+import { Path } from '../src/hashes/Path'
 
 function testTrie(items: [FullIndex, Hashable][], expectedHash: string) {
   const map = new ShaMap()
@@ -153,30 +156,14 @@ describe('should be able produce binary tries - transactions', () => {
 
     expect(items.length).toBe(10)
 
-    // 0 1 <
-    // 1 0 <
-    // 2 1 <
-    // 3 1 <
-    // 4 1 <
-    // 5 1 <
-    // 6 0 <
-    // 7 0 <
-    // 8 0 <
-    // 9 1 <
-    // A 0 <
-    // B 1 <
-    // C 1 <
-    // D 1 <
-    // E 0 <
-    // F 1 <
-
-    const bin = Buffer.from(map.headerBytes()).readUint32BE(0).toString(2)
-    expect(bin).toMatchInlineSnapshot(`"1011101000111101"`)
+    const bin = Buffer.from(map.trieBranchesHeader())
+      .readUint32BE(0)
+      .toString(2)
+    expect(bin).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
 
     const buffers: Uint8Array[] = []
     const sink: BytesSink = {
       put(buf: Uint8Array) {
-        // console.log('buf', buf.length)
         buffers.push(buf)
         return this
       }
@@ -186,92 +173,76 @@ describe('should be able produce binary tries - transactions', () => {
     expect(trie.length).toBe(4 + 10 * 32)
     expect(
       Buffer.from(trie.subarray(0, 4)).readUint32BE(0).toString(2)
-    ).toMatchInlineSnapshot(`"1011101000111101"`)
-    expect(new TrieParser(trie).header().toString(2)).toMatchInlineSnapshot(
-      `"1011101000111101"`
+    ).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
+    expect(new BinaryParser(trie).uint32().toString(2)).toMatchInlineSnapshot(
+      `"10001010100010000000101010100010"`
     )
-    const parser = new TrieParser(trie)
-    expect(Array.from(parser.parsedHeader())).toMatchInlineSnapshot(`
+    const parser = new BinaryParser(trie)
+    expect(Array.from(parser.trieHeader())).toMatchInlineSnapshot(`
       [
         [
           0,
-          false,
-          false,
+          2,
         ],
         [
           1,
-          true,
-          false,
+          0,
         ],
         [
           2,
-          false,
-          false,
+          2,
         ],
         [
           3,
-          false,
-          false,
+          2,
         ],
         [
           4,
-          false,
-          false,
+          2,
         ],
         [
           5,
-          false,
-          false,
+          2,
         ],
         [
           6,
-          true,
-          false,
+          0,
         ],
         [
           7,
-          true,
-          false,
+          0,
         ],
         [
           8,
-          true,
-          false,
+          0,
         ],
         [
           9,
-          false,
-          false,
+          2,
         ],
         [
           10,
-          true,
-          false,
+          0,
         ],
         [
           11,
-          false,
-          false,
+          2,
         ],
         [
           12,
-          false,
-          false,
+          2,
         ],
         [
           13,
-          false,
-          false,
+          2,
         ],
         [
           14,
-          true,
-          false,
+          0,
         ],
         [
           15,
-          false,
-          false,
+          2,
         ],
       ]
     `)
@@ -327,7 +298,7 @@ describe('should be able produce binary tries - transactions', () => {
   })
 })
 
-function getBinaryTrie(map: ShaMap) {
+function getBinaryTrie(map: ShaMap, abbrev = true) {
   const buffers: Uint8Array[] = []
   const sink: BytesSink = {
     put(buf: Uint8Array) {
@@ -336,7 +307,7 @@ function getBinaryTrie(map: ShaMap) {
       return this
     }
   }
-  map.trieBinary(sink)
+  map.trieBinary(sink, abbrev)
   return Buffer.concat(buffers)
 }
 
@@ -439,5 +410,185 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
     const bin = getBinaryTrie(buildAbbreviatedMap(map.pathToLeaf(abbrevLeaf)))
     expect(bin.length).toMatchInlineSnapshot(`520`)
     expect(ShaMap.fromTrieBinary(bin).hash().toHex()).toBe(expectedHash)
+  })
+})
+
+describe('Trie headers', () => {
+  it('empty', () => {
+    const map = new ShaMap()
+    const header = map.trieBranchesHeader()
+    const big = Buffer.from(header).readUintBE(0, 4)
+    expect(big.toString(2)).toMatchInlineSnapshot(`"0"`)
+  })
+  it('inner last', () => {
+    const map = new ShaMap()
+    map.setBranch(15, new ShaMapInner(1))
+    const header = map.trieBranchesHeader()
+    const num = Buffer.from(header).readUint32BE(0)
+    expect(num.toString(2)).toMatchInlineSnapshot(
+      `"1000000000000000000000000000000"`
+    )
+    const parser = new BinaryParser(header)
+    expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
+      `"1000000000000000000000000000000"`
+    )
+    parser.offset = 0
+    expect(Array.from(parser.trieHeader())).toMatchInlineSnapshot(`
+      [
+        [
+          0,
+          0,
+        ],
+        [
+          1,
+          0,
+        ],
+        [
+          2,
+          0,
+        ],
+        [
+          3,
+          0,
+        ],
+        [
+          4,
+          0,
+        ],
+        [
+          5,
+          0,
+        ],
+        [
+          6,
+          0,
+        ],
+        [
+          7,
+          0,
+        ],
+        [
+          8,
+          0,
+        ],
+        [
+          9,
+          0,
+        ],
+        [
+          10,
+          0,
+        ],
+        [
+          11,
+          0,
+        ],
+        [
+          12,
+          0,
+        ],
+        [
+          13,
+          0,
+        ],
+        [
+          14,
+          0,
+        ],
+        [
+          15,
+          1,
+        ],
+      ]
+    `)
+  })
+  it('item last', () => {
+    const map = new ShaMap()
+    const path = Path.from([15])
+    map.setBranch(
+      15,
+      new ShaMapLeaf(path, {
+        hashPrefix: () => new Uint8Array(),
+        toSink(sink) {}
+      })
+    )
+    const header = map.trieBranchesHeader(false)
+    const num = Buffer.from(header).readUint32BE(0)
+    expect(num.toString(2)).toMatchInlineSnapshot(
+      `"11000000000000000000000000000000"`
+    )
+    const parser = new BinaryParser(header)
+    expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
+      `"11000000000000000000000000000000"`
+    )
+    parser.offset = 0
+    expect(Array.from(parser.trieHeader())).toMatchInlineSnapshot(`
+      [
+        [
+          0,
+          0,
+        ],
+        [
+          1,
+          0,
+        ],
+        [
+          2,
+          0,
+        ],
+        [
+          3,
+          0,
+        ],
+        [
+          4,
+          0,
+        ],
+        [
+          5,
+          0,
+        ],
+        [
+          6,
+          0,
+        ],
+        [
+          7,
+          0,
+        ],
+        [
+          8,
+          0,
+        ],
+        [
+          9,
+          0,
+        ],
+        [
+          10,
+          0,
+        ],
+        [
+          11,
+          0,
+        ],
+        [
+          12,
+          0,
+        ],
+        [
+          13,
+          0,
+        ],
+        [
+          14,
+          0,
+        ],
+        [
+          15,
+          3,
+        ],
+      ]
+    `)
   })
 })
