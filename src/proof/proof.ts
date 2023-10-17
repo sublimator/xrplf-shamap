@@ -16,7 +16,7 @@ export type TrieJson = { [key: string]: string | TrieJson }
 export type Trie = Uint8Array | TrieJson
 export type TxId = string
 
-interface TxProofs {
+export interface TxProofs {
   treeHash: string // per xrpl ledger transaction_hash
   allTx: Trie
   perTx: Record<TxId, { trie: Trie }>
@@ -36,7 +36,7 @@ export function transactionItemizer(tx: Transaction) {
   return [id, hashable] as [HashT256, Hashable]
 }
 
-interface TxProofs1 {
+export interface CreateTxProofsParams {
   transactions: Transaction[]
   binary?: boolean
 }
@@ -44,7 +44,7 @@ interface TxProofs1 {
 export function createTxProofs({
   transactions,
   binary = false
-}: TxProofs1): TxProofs {
+}: CreateTxProofsParams): TxProofs {
   const map = new ShaMap()
   const items = transactions.map(transactionItemizer)
   for (const [index, item] of items) {
