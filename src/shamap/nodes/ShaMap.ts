@@ -50,7 +50,7 @@ export class ShaMap extends ShaMapInner {
   }
 
   abbreviatedIncluding(subtree: ShaMap) {
-    return this.abbreviate((depth, ix, path) => {
+    return this.abbreviate((_, __, path) => {
       const index = Path.from(path)
       return subtree.hasPath(index)
     })
