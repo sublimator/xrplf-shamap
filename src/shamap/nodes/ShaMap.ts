@@ -50,7 +50,6 @@ export class ShaMap extends ShaMapInner {
           parse(newInner, path.concat(i))
         } else if (type === BRANCH.preHashed) {
           const index = Path.from(path.concat(i))
-          // item type is undefined, todo?
           map.addItem(index, parser.preHashed())
         } else if (type === BRANCH.item) {
           throw new Error('R.F.U')
