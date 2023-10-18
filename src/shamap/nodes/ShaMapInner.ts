@@ -9,6 +9,7 @@ import { TrieJson } from '../../proof/types'
 import { trieBranchesHeader } from '../binary-trie/trieBranchesHeader'
 import { bytesList } from '../../utils/bytesList'
 import { trieVersionHeader } from '../binary-trie/trieVersionHeader'
+import { encodePreHashedType } from '../binary-trie/encodePreHashedType'
 
 interface TrieBinaryParams {
   typed?: boolean
@@ -174,12 +175,8 @@ export class ShaMapInner extends ShaMapNode {
           node.sinkTrieBinary(sink, abbrev, typed)
         } else if (node.isLeaf()) {
           if (abbrev || node.hasPreHashed()) {
-            const map = { undefined: 0, inner: 1, leaf: 2 }
-            const type = node.preHashedType()
-            // TODO: Do we even need this ?
-            // It seems like a waste of bytes
             if (typed) {
-              sink.put(Uint8Array.of(map[`${type}`]))
+              sink.put(encodePreHashedType(node.preHashedType()))
             }
             node.hash().toSink(sink)
           } else {
