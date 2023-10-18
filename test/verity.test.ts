@@ -4,7 +4,7 @@ import ledger40000 from './ledger-full-40000.json'
 import ledger38129 from './ledger-full-38129.json'
 import { FullIndex, Hashable } from '../src/types'
 import { ShaMap } from '../src/shamap/nodes/ShaMap'
-import { hashItem } from '../src/shamap/nodes/ShaMapItem'
+import { hashItem, ShaMapItem } from '../src/shamap/nodes/ShaMapItem'
 import { accountItem, txItem } from './utils/itemizers'
 import ledger1 from './ledger-testnet-binary-42089779.json'
 import ledger2 from './ledger-binary-83258110.json'
@@ -14,6 +14,7 @@ import { BinaryTrieParser } from '../src/shamap/binary-trie/BinaryTrieParser'
 import { ShaMapInner } from '../src/shamap/nodes/ShaMapInner'
 import { ShaMapLeaf } from '../src/shamap/nodes/ShaMapLeaf'
 import { Path } from '../src/indexes/Path'
+import { trieBranchesHeader } from '../src/shamap/binary-trie/trieBranchesHeader'
 
 function testTrie(items: [FullIndex, Hashable][], expectedHash: string) {
   const map = new ShaMap()
@@ -76,15 +77,14 @@ describe('Known SHAMap hashes', () => {
           const fromTrie = ShaMap.fromTrieJSON(trie)
           expect(fromTrie.hash().toHex()).toBe(expectedHash)
           // The items don't have an index to be able to match by index
-          // expect(fromTrie.pathToLeaf(index).leaf).toBeUndefined()
           expect(fromTrie.getLeaf(index)).toBeUndefined()
           // But we can pass in a hash to match
-          // expect(fromTrie.pathToLeaf(index, hash).leaf).toBeDefined()
-
           expect(fromTrie.getLeaf(index, hash)).toBeDefined()
+          // Should fail if the hash is wrong (use index instead)
           expect(fromTrie.getLeaf(index, index)).toBeUndefined()
-
+          // Idem / Ditto / Same as above / etc / you feelin' me?
           expect(fromTrie.hasHashed(index, hash)).toBe(true)
+          expect(fromTrie.hasHashed(index, index)).toBe(false)
         }
       )
 
@@ -95,7 +95,8 @@ describe('Known SHAMap hashes', () => {
         }
         expect(map.hash().toHex()).toBe(expectedHash)
 
-        const wanted = items.slice(0, 4)
+        const numItems = 4
+        const wanted = items.slice(0, numItems)
         const rebuild = map.abbreviate((depth, ix) => {
           return Boolean(
             wanted.findIndex(([index]) => {
@@ -116,6 +117,16 @@ describe('Known SHAMap hashes', () => {
 
         const fromSub = map.abbreviatedIncluding(subtree)
         expect(fromSub.hash().toHex()).toBe(expectedHash)
+        const leafItems: Record<string, ShaMapItem> = {}
+        fromSub.walkLeaves(l => (leafItems[l.index.toHex()] = l.item))
+        const expectedPreHashedLeaves = 3
+        expect(Object.keys(leafItems).length).toBe(
+          numItems + expectedPreHashedLeaves
+        )
+        const preHashedLeaves = Object.values(leafItems).filter(
+          i => 'type' in i && i.type === 'leaf'
+        )
+        expect(preHashedLeaves.length).toBe(expectedPreHashedLeaves)
       })
     }
   )
@@ -189,9 +200,7 @@ describe('should be able produce binary tries - transactions', () => {
 
     expect(items.length).toBe(10)
 
-    const bin = Buffer.from(map.trieBranchesHeader())
-      .readUint32BE(0)
-      .toString(2)
+    const bin = Buffer.from(trieBranchesHeader(map)).readUint32BE(0).toString(2)
     expect(bin).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
 
     const trie = map.trieBinary()
@@ -428,14 +437,14 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
 describe('Trie headers', () => {
   it('empty', () => {
     const map = new ShaMap()
-    const header = map.trieBranchesHeader()
+    const header = trieBranchesHeader(map)
     const big = Buffer.from(header).readUintBE(0, 4)
     expect(big.toString(2)).toMatchInlineSnapshot(`"0"`)
   })
   it('inner last', () => {
     const map = new ShaMap()
     map.setBranch(15, new ShaMapInner(1))
-    const header = map.trieBranchesHeader()
+    const header = trieBranchesHeader(map)
     const num = Buffer.from(header).readUint32BE(0)
     expect(num.toString(2)).toMatchInlineSnapshot(
       `"1000000000000000000000000000000"`
@@ -524,7 +533,7 @@ describe('Trie headers', () => {
         toSink(sink) {}
       })
     )
-    const header = map.trieBranchesHeader(false)
+    const header = trieBranchesHeader(map, false)
     const num = Buffer.from(header).readUint32BE(0)
     expect(num.toString(2)).toMatchInlineSnapshot(
       `"11000000000000000000000000000000"`

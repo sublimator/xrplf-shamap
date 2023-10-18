@@ -23,20 +23,20 @@ export interface Hashable extends BytesSinkable {
 }
 
 export interface PreHashed {
-  type?: 'leaf' | 'inner' // ??
+  type?: 'leaf' | 'inner' // HashPrefix ??
   preHashed: HashT256
 }
 
-export interface PathIndex {
+export interface Hexed {
+  toHex(): HexString
+}
+
+export interface PathIndex extends Hexed {
   nibbles: number
 
   nibble(n: number): number
 
   eq(leafIndex: PathIndex): boolean
-}
-
-export interface Hexed {
-  toHex(): HexString
 }
 
 export interface HashT256 extends BytesSinkable, Hexed, PathIndex {

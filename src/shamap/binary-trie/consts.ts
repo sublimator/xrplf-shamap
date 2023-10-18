@@ -5,5 +5,4 @@ export const BRANCH = {
   item: 3 // full item R.F.U for run length encoding
 } as const
 
-// TODO:  ValueOf<T>
 export type BranchType = (typeof BRANCH)[keyof typeof BRANCH]

@@ -9,6 +9,7 @@ import { BRANCH, BranchType } from '../binary-trie/consts'
 import { uInt32Bytes } from '../../utils/UInt32Bytes'
 import { concatBytes } from '../../utils/concatBytes'
 import { TrieJson } from '../../proof/types'
+import { trieBranchesHeader } from '../binary-trie/trieBranchesHeader'
 
 export interface LeafSearch {
   leaf?: ShaMapLeaf
@@ -22,6 +23,15 @@ export class ShaMapInner extends ShaMapNode {
 
   constructor(public readonly depth: number = 0) {
     super()
+  }
+
+  protected calculateHash() {
+    if (this.empty()) {
+      return Hash256.ZERO_256
+    }
+    const hash = Sha512.put(HashPrefix.innerNode)
+    this.toSink(hash)
+    return hash.finish()
   }
 
   isInner(): this is ShaMapInner {
@@ -49,15 +59,6 @@ export class ShaMapInner extends ShaMapNode {
     return this.slotBits === 0
   }
 
-  protected calculateHash() {
-    if (this.empty()) {
-      return Hash256.ZERO_256
-    }
-    const hash = Sha512.put(HashPrefix.innerNode)
-    this.toSink(hash)
-    return hash.finish()
-  }
-
   toSink(list: BytesSink): void {
     for (let i = 0; i < this.branches.length; i++) {
       const branch = this.branches[i]
@@ -66,11 +67,8 @@ export class ShaMapInner extends ShaMapNode {
     }
   }
 
-  hasPath(index: PathIndex): boolean {
-    return !!this.followPath(index)
-  }
-
   getLeaf(index: FullIndex): ShaMapLeaf | undefined
+
   getLeaf(index: PathIndex, leafHash: HashT256): ShaMapLeaf | undefined
   getLeaf(index: PathIndex, leafHash?: HashT256): ShaMapLeaf | undefined {
     const target = this.followPath(index)
@@ -84,6 +82,10 @@ export class ShaMapInner extends ShaMapNode {
         }
       }
     }
+  }
+
+  hasPath(index: PathIndex): boolean {
+    return !!this.followPath(index)
   }
 
   followPath(index: PathIndex): ShaMapNode | undefined {
@@ -135,7 +137,7 @@ export class ShaMapInner extends ShaMapNode {
   }
 
   protected sinkTrieBinary(sink: BytesSink, abbrev: boolean = true) {
-    const header = this.trieBranchesHeader(abbrev)
+    const header = trieBranchesHeader(this, abbrev)
     sink.put(header)
 
     this.eachBranch(node => {
@@ -159,20 +161,15 @@ export class ShaMapInner extends ShaMapNode {
     return concatBytes(buffers)
   }
 
-  trieBranchesHeader(abbrev = true) {
-    let nodeHeader = 0
-    this.eachBranch((n, i) => {
-      let type: BranchType = BRANCH.empty
-
-      if (n) {
-        if (n.isInner()) {
-          type = BRANCH.inner
-        } else if (n.isLeaf()) {
-          type = abbrev || n.hasPreHashed() ? BRANCH.preHashed : BRANCH.item
+  walkLeaves(onLeaf: (node: ShaMapLeaf) => void) {
+    this.eachBranch(b => {
+      if (b) {
+        if (b.isInner()) {
+          b.walkLeaves(onLeaf)
+        } else if (b.isLeaf() && !b.hasPreHashedInner()) {
+          onLeaf(b)
         }
       }
-      nodeHeader |= type << (i * 2)
     })
-    return uInt32Bytes(nodeHeader)
   }
 }

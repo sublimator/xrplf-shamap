@@ -15,6 +15,7 @@ export class ShaMap extends ShaMapInner {
           addTo(val as JsonObject, prefix.concat(key))
         } else if (typeof val === 'string') {
           const index = Path.from(prefix.concat(key))
+          // item type is undefined, todo?
           map.addItem(index, { preHashed: Hash256.from(val) })
         }
       })
@@ -36,6 +37,7 @@ export class ShaMap extends ShaMapInner {
           parse(newInner, path.concat(i))
         } else if (type === BRANCH.preHashed) {
           const index = Path.from(path.concat(i))
+          // item type is undefined, todo?
           map.addItem(index, { preHashed: parser.hash() })
         } else if (type === BRANCH.item) {
           throw new Error('R.F.U')
@@ -59,7 +61,7 @@ export class ShaMap extends ShaMapInner {
   }
 
   abbreviate(
-    onInner: (depth: number, ix: number, path: number[]) => boolean = () => true
+    onPath: (depth: number, ix: number, path: number[]) => boolean = () => true
   ) {
     const map = new ShaMap()
 
@@ -68,17 +70,22 @@ export class ShaMap extends ShaMapInner {
       inner.eachBranch((node, ix) => {
         if (node) {
           const nodePath = _path.concat(ix)
-          if (node.isInner() && onInner(_path.length, ix, nodePath)) {
+          const wantPath = onPath(_path.length, ix, nodePath)
+          if (node.isInner() && wantPath) {
             walk(node, nodePath)
           } else {
             // This just pulls in the other tree
             // It's job isn't to fully abbreviate, but rather build a subtree
             // We may want to do something with the full items, so just keep
             // them for now.
-            map.addItem(
-              node.isLeaf() ? node.index : Path.from(nodePath),
-              node.isLeaf() ? node.item : { preHashed: node.hash() }
-            )
+            if (node.isLeaf() && wantPath) {
+              map.addItem(node.index, node.item)
+            } else {
+              map.addItem(Path.from(nodePath), {
+                type: node.isInner() ? 'inner' : 'leaf',
+                preHashed: node.hash()
+              })
+            }
           }
         }
       })

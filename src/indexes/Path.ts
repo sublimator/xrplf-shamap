@@ -1,4 +1,4 @@
-import { PathIndex } from '../types'
+import { HexString, PathIndex } from '../types'
 import { equalPath } from '../utils/equalPath'
 import { parseNibble } from '../utils/parseNibble'
 
@@ -14,6 +14,10 @@ export class Path implements PathIndex {
 
   eq(other: PathIndex): boolean {
     return equalPath(this, other)
+  }
+
+  toHex(): HexString {
+    return this.turns.map(n => n.toString(16).toUpperCase()).join('')
   }
 
   nibble(n: number): number {
