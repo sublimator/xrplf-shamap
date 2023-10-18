@@ -15,6 +15,7 @@ import { ShaMapInner } from '../src/shamap/nodes/ShaMapInner'
 import { ShaMapLeaf } from '../src/shamap/nodes/ShaMapLeaf'
 import { Path } from '../src/indexes/Path'
 import { trieBranchesHeader } from '../src/shamap/binary-trie/trieBranchesHeader'
+import { VERSION_HEADER_LENGTH } from '../src/shamap/binary-trie/trieVersionHeader'
 
 function testTrie(items: [FullIndex, Hashable][], expectedHash: string) {
   const map = new ShaMap()
@@ -204,12 +205,13 @@ describe('should be able produce binary tries - transactions', () => {
     expect(bin).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
 
     const trie = map.trieBinary()
-    expect(trie.length).toBe(4 + 4 + 10 * /*1+ untyped */ 32)
+
+    expect(trie.length).toBe(
+      VERSION_HEADER_LENGTH + 4 + 10 * /*1+ untyped */ 32
+    )
+
     expect(
-      Buffer.from(trie.subarray(0, 4)).readUint32BE(0).toString(2)
-    ).toMatchInlineSnapshot(`"10"`)
-    expect(
-      new BinaryTrieParser(trie).readAndSetVersion().uint32().toString(2)
+      new BinaryTrieParser(trie).readAndSetVersion().uInt32().toString(2)
     ).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
     const parser = new BinaryTrieParser(trie)
     parser.readAndSetVersion()
@@ -372,7 +374,7 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
     )
 
     const trie = map.trieBinary() //
-    expect(trie.length).toMatchInlineSnapshot(`1344`)
+    expect(trie.length).toMatchInlineSnapshot(`1341`)
     const retrie = ShaMap.fromTrieBinary(trie)
     expect(retrie.trieJSON()).toMatchInlineSnapshot(`
       {
@@ -450,7 +452,7 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
 
     const abbrevLeaf = items[14][0]
     const bin = map.abbreviatedWith(abbrevLeaf).trieBinary()
-    expect(bin.length).toMatchInlineSnapshot(`524`)
+    expect(bin.length).toMatchInlineSnapshot(`521`)
     expect(ShaMap.fromTrieBinary(bin).hash().toHex()).toBe(expectedHash)
   })
 })
@@ -471,7 +473,7 @@ describe('Trie headers', () => {
       `"1000000000000000000000000000000"`
     )
     const parser = new BinaryTrieParser(header)
-    expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
+    expect(parser.uInt32().toString(2)).toMatchInlineSnapshot(
       `"1000000000000000000000000000000"`
     )
     parser.reset()
@@ -560,7 +562,7 @@ describe('Trie headers', () => {
       `"11000000000000000000000000000000"`
     )
     const parser = new BinaryTrieParser(header)
-    expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
+    expect(parser.uInt32().toString(2)).toMatchInlineSnapshot(
       `"11000000000000000000000000000000"`
     )
     parser.reset()

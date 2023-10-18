@@ -11,7 +11,7 @@ export class BinaryTrieParser {
   ) {}
 
   readAndSetVersion() {
-    this.version = this.uint32()
+    this.version = this.uInt8()
     return this
   }
 
@@ -19,13 +19,17 @@ export class BinaryTrieParser {
     this.offset = 0
   }
 
-  uint32() {
+  uInt32() {
     const buf = this.readN(4)
     return new DataView(buf.buffer, buf.byteOffset, 4).getUint32(0)
   }
 
+  uInt8() {
+    return this.readN(1)[0] >>> 0
+  }
+
   *trieHeader(): Generator<[number, BranchType]> {
-    const header = this.uint32()
+    const header = this.uInt32()
     for (let i = 0; i < 16; i++) {
       const type = header & (0b11 << (i * 2))
       yield [i, (type >>> (i * 2)) as BranchType]
@@ -52,7 +56,7 @@ export class BinaryTrieParser {
       return undefined
     }
 
-    const type = this.readN(1)[0]
+    const type = this.uInt8()
     // TODO: put this in utils
     if (type < 0 || type > 2) {
       throw new Error()
