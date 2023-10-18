@@ -1,17 +1,11 @@
-import { LeafSearch, ShaMapInner } from './ShaMapInner'
+import { ShaMapInner } from './ShaMapInner'
 import { Path } from '../../indexes/Path'
-import { FullIndex, HashT256, JsonObject, PathIndex } from '../../types'
+import { JsonObject, PathIndex } from '../../types'
 import { Hash256 } from '../../indexes/Hash256'
 import { BinaryTrieParser } from '../binary-trie/BinaryTrieParser'
 import { BRANCH } from '../binary-trie/consts'
 
 export class ShaMap extends ShaMapInner {
-  pathToLeaf(leafIndex: FullIndex): LeafSearch
-  pathToLeaf(path: PathIndex, leafHash: HashT256): LeafSearch
-  pathToLeaf(indexOrPath: PathIndex, leafHash?: HashT256): LeafSearch {
-    return this._findPathToLeaf(indexOrPath, leafHash)
-  }
-
   static fromTrieJSON(trie: JsonObject): ShaMap {
     const map = new ShaMap()
 

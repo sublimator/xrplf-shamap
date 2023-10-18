@@ -1,6 +1,6 @@
 import { ShaMapNode } from './ShaMapNode'
 import { HashPrefix } from '../../utils/HashPrefix'
-import { BytesSink, HashT256, PathIndex } from '../../types'
+import { BytesSink, FullIndex, HashT256, PathIndex } from '../../types'
 import { ShaMapLeaf } from './ShaMapLeaf'
 import { ShaMapItem } from './ShaMapItem'
 import { Sha512 } from '../../indexes/Sha512'
@@ -70,6 +70,22 @@ export class ShaMapInner extends ShaMapNode {
     return !!this.followPath(index)
   }
 
+  getLeaf(index: FullIndex): ShaMapLeaf | undefined
+  getLeaf(index: PathIndex, leafHash: HashT256): ShaMapLeaf | undefined
+  getLeaf(index: PathIndex, leafHash?: HashT256): ShaMapLeaf | undefined {
+    const target = this.followPath(index)
+    if (target) {
+      if (target.isLeaf()) {
+        if (
+          (leafHash && target.hash().eq(leafHash)) ||
+          (!leafHash && target.index.eq(index))
+        ) {
+          return target
+        }
+      }
+    }
+  }
+
   followPath(index: PathIndex): ShaMapNode | undefined {
     const b = this.selectBranch(index)
     // We may not have a full path
@@ -84,10 +100,7 @@ export class ShaMapInner extends ShaMapNode {
   }
 
   hasHashed(index: PathIndex, hash: HashT256) {
-    const leaf = this._findPathToLeaf(index, hash).leaf
-    // We've already checked, but can't hurt too much to check twice!
-    // Well, it can, perf!!!
-    return Boolean(leaf?.hash().eq(hash))
+    return Boolean(this.getLeaf(index, hash))
   }
 
   addItem(index: PathIndex, item: ShaMapItem): void {
@@ -108,35 +121,6 @@ export class ShaMapInner extends ShaMapNode {
     } else {
       throw new Error('invalid ShaMap.addItem call')
     }
-  }
-
-  protected _findPathToLeaf(
-    leafIndex: PathIndex,
-    leafHash?: HashT256,
-    stack: ShaMapInner[] = []
-  ): LeafSearch {
-    const nibble = leafIndex.nibble(this.depth)
-    const target = this.branches[nibble]
-
-    if (!target) {
-      return {}
-    }
-
-    if (target.isLeaf()) {
-      if (
-        (leafHash && target.hash().eq(leafHash)) ||
-        (!leafHash && target.index.eq(leafIndex))
-      ) {
-        return { leaf: target }
-      }
-    }
-
-    if (target.isInner()) {
-      stack.push(this)
-      return target._findPathToLeaf(leafIndex, leafHash, stack)
-    }
-
-    return {}
   }
 
   trieJSON(): TrieJson {

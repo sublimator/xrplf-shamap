@@ -76,9 +76,14 @@ describe('Known SHAMap hashes', () => {
           const fromTrie = ShaMap.fromTrieJSON(trie)
           expect(fromTrie.hash().toHex()).toBe(expectedHash)
           // The items don't have an index to be able to match by index
-          expect(fromTrie.pathToLeaf(index).leaf).toBeUndefined()
+          // expect(fromTrie.pathToLeaf(index).leaf).toBeUndefined()
+          expect(fromTrie.getLeaf(index)).toBeUndefined()
           // But we can pass in a hash to match
-          expect(fromTrie.pathToLeaf(index, hash).leaf).toBeDefined()
+          // expect(fromTrie.pathToLeaf(index, hash).leaf).toBeDefined()
+
+          expect(fromTrie.getLeaf(index, hash)).toBeDefined()
+          expect(fromTrie.getLeaf(index, index)).toBeUndefined()
+
           expect(fromTrie.hasHashed(index, hash)).toBe(true)
         }
       )
@@ -104,7 +109,7 @@ describe('Known SHAMap hashes', () => {
           wanted
             .map(([index, item]) => {
               subtree.addItem(index, item)
-              return Boolean(rebuild.pathToLeaf(index).leaf)
+              return Boolean(rebuild.getLeaf(index))
             })
             .every(Boolean)
         ).toBe(true)
