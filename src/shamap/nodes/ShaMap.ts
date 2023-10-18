@@ -20,13 +20,10 @@ export class ShaMap extends ShaMapInner {
           if (typeChar !== 'l' && typeChar !== 'i' && typeChar !== 'u') {
             throw new Error(`invalid preHashed type char ${typeChar}`)
           }
+          const type =
+            typeChar === 'l' ? 'leaf' : typeChar === 'i' ? 'inner' : undefined
           map.addItem(index, {
-            type:
-              typeChar === 'l'
-                ? 'leaf'
-                : typeChar === 'i'
-                ? 'inner'
-                : undefined,
+            type: type,
             preHashed: Hash256.from(isTyped ? val.slice(1) : val)
           })
         }

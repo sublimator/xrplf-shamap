@@ -140,16 +140,21 @@ export class ShaMapInner extends ShaMapNode {
       if (node) {
         trie[nibble] = node.isLeaf()
           ? typed
-            ? `${
-                (node.hasHashable()
-                  ? 'leaf'
-                  : node.preHashedType() ?? 'undefined')[0]
+            ? // i|l|u character at start of hash, followed by 64 hex chars
+              `${
+                (node.hasHashable() ? 'l' : node.preHashedType() ?? 'u')[0]
               }${node.hash().toHex()}`
             : node.hash().toHex()
           : (node as ShaMapInner).trieJSON({ typed })
       }
     })
     return trie
+  }
+
+  trieBinary({ typed = false, abbrev = true }: TrieBinaryParams = {}) {
+    const list = bytesList()
+    this.sinkTrieBinary(list, abbrev, typed)
+    return list.done()
   }
 
   protected sinkTrieBinary(
@@ -183,12 +188,6 @@ export class ShaMapInner extends ShaMapNode {
         }
       }
     })
-  }
-
-  trieBinary({ typed = false, abbrev = true }: TrieBinaryParams = {}) {
-    const list = bytesList()
-    this.sinkTrieBinary(list, abbrev, typed)
-    return list.done()
   }
 
   walkLeaves(onLeaf: (node: ShaMapLeaf) => void) {

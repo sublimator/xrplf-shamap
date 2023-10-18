@@ -1,5 +1,9 @@
 import { describe, expect, it } from '@jest/globals'
-import { checkTxProofTrie, createTxProofs } from '../src/proof/TxProofs'
+import {
+  checkTxProofTrie,
+  createTxProofs,
+  CreateTxProofsParams
+} from '../src/proof/TxProofs'
 
 import ledger1 from './ledger-testnet-binary-42089779.json'
 import ledger2 from './ledger-binary-83258110.json'
@@ -12,15 +16,16 @@ import { ledgerIdent } from './utils/ledgerIdent'
 const ledgers = [ledger1, ledger2]
 
 describe.each(ledgers)('proof', ledger => {
-  describe.each([
+  const params: Array<Partial<CreateTxProofsParams>> = [
     { binary: false, typedTries: false },
     { binary: false, typedTries: true },
     { binary: true, typedTries: false },
     { binary: true, typedTries: true }
-  ])('binary %s', binary => {
+  ]
+  describe.each(params)('binary %s', params => {
     const proofs = createTxProofs({
       transactions: ledger.transactions,
-      ...binary
+      ...params
     })
 
     const tries = proofs.perTx
@@ -30,9 +35,9 @@ describe.each(ledgers)('proof', ledger => {
     })
 
     expect(
-      !binary ? undefined : Object.values(tries).map(t => t.trie.length)
+      !params ? undefined : Object.values(tries).map(t => t.trie.length)
     ).toMatchSnapshot('perTx binary trie size')
-    expect(!binary ? undefined : proofs.allTx.length).toMatchSnapshot(
+    expect(!params ? undefined : proofs.allTx.length).toMatchSnapshot(
       `all Tx binary trie size`
     )
 
