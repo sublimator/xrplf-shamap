@@ -24,6 +24,11 @@ describe.each(ledgers)('proof', ledger => {
       return [id, tx]
     })
 
+    expect(
+      !binary ? undefined : Object.values(tries).map(t => t.trie.length)
+    ).toMatchSnapshot()
+    expect(!binary ? undefined : proofs.allTx.length).toMatchSnapshot()
+
     expect(proofs).toMatchSnapshot()
 
     it.each(txs)(

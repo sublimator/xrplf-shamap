@@ -3,7 +3,6 @@ import { ShaMap } from '../shamap/nodes/ShaMap'
 import { HashPrefix } from '../utils/HashPrefix'
 import { transactionID } from '../utils/hashes'
 import { toSinkVL } from '../utils/variableLength'
-import { buildAbbreviatedMap } from '../shamap/abbrev/buildAbbreviated'
 import { hashItem } from '../shamap/nodes/ShaMapItem'
 import { ensureBytes } from '../utils/ensureBytes'
 import { Transaction, Trie, TxProofs } from './types'
@@ -41,11 +40,7 @@ export function createTxProofs({
   const perTx: TxProofs['perTx'] = {}
 
   items.forEach(([index]) => {
-    const path = map.pathToLeaf(index)
-    if (!path.leaf) {
-      throw new Error()
-    }
-    const abbrev = buildAbbreviatedMap(path)
+    const abbrev = map.abbreviate((d, ix) => index.nibble(d) == ix)
     const trie = binary ? abbrev.trieBinary() : abbrev.trieJSON()
     const txId = index.toHex()
     perTx[txId] = {

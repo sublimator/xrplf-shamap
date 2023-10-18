@@ -2,11 +2,10 @@ import { beforeAll, describe, expect, it } from '@jest/globals'
 
 import ledger40000 from './ledger-full-40000.json'
 import ledger38129 from './ledger-full-38129.json'
-import { BytesSink, FullIndex, Hashable } from '../src/types'
+import { FullIndex, Hashable } from '../src/types'
 import { ShaMap } from '../src/shamap/nodes/ShaMap'
 import { hashItem } from '../src/shamap/nodes/ShaMapItem'
 import { accountItem, txItem } from './utils/itemizers'
-import { buildAbbreviatedMap } from '../src/shamap/abbrev/buildAbbreviated'
 import ledger1 from './ledger-testnet-binary-42089779.json'
 import ledger2 from './ledger-binary-83258110.json'
 
@@ -70,8 +69,7 @@ describe('Known SHAMap hashes', () => {
         `abbreviated tree ledger ${ledger.ledger_index} index-%s`,
         (index, item) => {
           const hash = hashItem(index, item)
-          const path = full.pathToLeaf(index)
-          const abbr = buildAbbreviatedMap(path)
+          const abbr = full.abbreviatedWith(index)
           expect(abbr.hash().toHex()).toBe(expectedHash)
           const trie = abbr.trieJSON()
           expect(trie).toMatchSnapshot()
@@ -84,6 +82,36 @@ describe('Known SHAMap hashes', () => {
           expect(fromTrie.hasHashed(index, hash)).toBe(true)
         }
       )
+
+      it('should be possible to choose which nodes to get', () => {
+        const map = new ShaMap()
+        for (const [index, item] of items) {
+          map.addItem(index, item)
+        }
+        expect(map.hash().toHex()).toBe(expectedHash)
+
+        const wanted = items.slice(0, 4)
+        const rebuild = map.abbreviate((depth, ix) => {
+          return Boolean(
+            wanted.findIndex(([index]) => {
+              return index.nibble(depth) === ix
+            }) !== -1
+          )
+        })
+        expect(rebuild.hash().toHex()).toBe(expectedHash)
+        const subtree = new ShaMap()
+        expect(
+          wanted
+            .map(([index, item]) => {
+              subtree.addItem(index, item)
+              return Boolean(rebuild.pathToLeaf(index).leaf)
+            })
+            .every(Boolean)
+        ).toBe(true)
+
+        const fromSub = map.abbreviatedIncluding(subtree)
+        expect(fromSub.hash().toHex()).toBe(expectedHash)
+      })
     }
   )
 
@@ -161,15 +189,7 @@ describe('should be able produce binary tries - transactions', () => {
       .toString(2)
     expect(bin).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
 
-    const buffers: Uint8Array[] = []
-    const sink: BytesSink = {
-      put(buf: Uint8Array) {
-        buffers.push(buf)
-        return this
-      }
-    }
-    map.sinkTrieBinary(sink)
-    const trie = Buffer.concat(buffers)
+    const trie = map.trieBinary()
     expect(trie.length).toBe(4 + 10 * 32)
     expect(
       Buffer.from(trie.subarray(0, 4)).readUint32BE(0).toString(2)
@@ -394,7 +414,7 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
     expect(retrie.hash().toHex()).toBe(expectedHash)
 
     const abbrevLeaf = items[14][0]
-    const bin = buildAbbreviatedMap(map.pathToLeaf(abbrevLeaf)).trieBinary()
+    const bin = map.abbreviatedWith(abbrevLeaf).trieBinary()
     expect(bin.length).toMatchInlineSnapshot(`520`)
     expect(ShaMap.fromTrieBinary(bin).hash().toHex()).toBe(expectedHash)
   })

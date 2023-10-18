@@ -11,7 +11,7 @@ export type JSONArray = JSONValue[]
 export type JsonObject = { [key: string]: JSONValue }
 
 export interface BytesSink {
-  put(data: Uint8Array): this
+  put(data: Uint8Array): void
 }
 
 export interface BytesSinkable {
@@ -23,6 +23,7 @@ export interface Hashable extends BytesSinkable {
 }
 
 export interface PreHashed {
+  type?: 'leaf' | 'inner' // ??
   preHashed: HashT256
 }
 
@@ -40,6 +41,7 @@ export interface Hexed {
 
 export interface HashT256 extends BytesSinkable, Hexed, PathIndex {
   nibbles: 64
+
   eq(leafIndex: HashT256): boolean
 }
 

@@ -1,20 +1,14 @@
-import { ShaMapInner, StackToPath } from './ShaMapInner'
+import { LeafSearch, ShaMapInner } from './ShaMapInner'
 import { Path } from '../../indexes/Path'
-import {
-  BytesSink,
-  FullIndex,
-  HashT256,
-  JsonObject,
-  PathIndex
-} from '../../types'
+import { FullIndex, HashT256, JsonObject, PathIndex } from '../../types'
 import { Hash256 } from '../../indexes/Hash256'
 import { BinaryTrieParser } from '../binary-trie/BinaryTrieParser'
 import { BRANCH } from '../binary-trie/consts'
 
 export class ShaMap extends ShaMapInner {
-  pathToLeaf(leafIndex: FullIndex): StackToPath
-  pathToLeaf(path: PathIndex, leafHash: HashT256): StackToPath
-  pathToLeaf(indexOrPath: PathIndex, leafHash?: HashT256): StackToPath {
+  pathToLeaf(leafIndex: FullIndex): LeafSearch
+  pathToLeaf(path: PathIndex, leafHash: HashT256): LeafSearch
+  pathToLeaf(indexOrPath: PathIndex, leafHash?: HashT256): LeafSearch {
     return this._findPathToLeaf(indexOrPath, leafHash)
   }
 
@@ -56,6 +50,47 @@ export class ShaMap extends ShaMapInner {
     }
 
     parse(map, [])
+    return map
+  }
+
+  abbreviatedIncluding(subtree: ShaMap) {
+    return this.abbreviate((depth, ix, path) => {
+      const index = Path.from(path)
+      return subtree.hasPath(index)
+    })
+  }
+
+  abbreviatedWith(path: PathIndex) {
+    return this.abbreviate((d, ix) => path.nibble(d) === ix)
+  }
+
+  abbreviate(
+    onInner: (depth: number, ix: number, path: number[]) => boolean = () => true
+  ) {
+    const map = new ShaMap()
+
+    function walk(inner: ShaMapInner, _path: number[]) {
+      /// we can't just do this ...
+      inner.eachBranch((node, ix) => {
+        if (node) {
+          const nodePath = _path.concat(ix)
+          if (node.isInner() && onInner(_path.length, ix, nodePath)) {
+            walk(node, nodePath)
+          } else {
+            // This just pulls in the other tree
+            // It's job isn't to fully abbreviate, but rather build a subtree
+            // We may want to do something with the full items, so just keep
+            // them for now.
+            map.addItem(
+              node.isLeaf() ? node.index : Path.from(nodePath),
+              node.isLeaf() ? node.item : { preHashed: node.hash() }
+            )
+          }
+        }
+      })
+    }
+
+    walk(this, [])
     return map
   }
 }

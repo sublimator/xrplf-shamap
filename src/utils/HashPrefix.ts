@@ -7,7 +7,9 @@ const HashPrefix = {
   // account state
   accountStateEntry: hexToBytes('4d4c4e00'),
   // inner node in tree
-  innerNode: hexToBytes('4d494e00')
+  innerNode: hexToBytes('4d494e00'),
+  manifest: hexToBytes('4d414e00'),
+  validation: hexToBytes('56414c00')
 } as const
 
 export { HashPrefix }

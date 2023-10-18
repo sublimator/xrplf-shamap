@@ -10,9 +10,8 @@ import { uInt32Bytes } from '../../utils/UInt32Bytes'
 import { concatBytes } from '../../utils/concatBytes'
 import { TrieJson } from '../../proof/types'
 
-export interface StackToPath {
+export interface LeafSearch {
   leaf?: ShaMapLeaf
-  inners: ShaMapInner[]
 }
 
 export class ShaMapInner extends ShaMapNode {
@@ -38,8 +37,8 @@ export class ShaMapInner extends ShaMapNode {
     this.branches[slot] = branch
   }
 
-  getBranch<T extends ShaMapNode>(slot: number) {
-    return this.branches[slot] as T
+  getBranch<T extends ShaMapNode = ShaMapNode>(slot: number): T | undefined {
+    return this.branches[slot] as T | undefined
   }
 
   eachBranch(each: (node: ShaMapNode | undefined, ix: number) => void) {
@@ -67,38 +66,45 @@ export class ShaMapInner extends ShaMapNode {
     }
   }
 
+  hasPath(index: PathIndex): boolean {
+    return !!this.followPath(index)
+  }
+
+  followPath(index: PathIndex): ShaMapNode | undefined {
+    const b = this.selectBranch(index)
+    // We may not have a full path
+    if (b && b.isInner() && index.nibbles > b.depth) {
+      return b.followPath(index)
+    }
+    return b
+  }
+
+  selectBranch(index: PathIndex) {
+    return this.getBranch(index.nibble(this.depth))
+  }
+
   hasHashed(index: PathIndex, hash: HashT256) {
     const leaf = this._findPathToLeaf(index, hash).leaf
     // We've already checked, but can't hurt too much to check twice!
+    // Well, it can, perf!!!
     return Boolean(leaf?.hash().eq(hash))
   }
 
-  addItem(index: PathIndex, item: ShaMapItem, depth = 0): void {
-    if (depth !== 0 && !('preHashed' in item)) {
-      throw new Error('probably a mistake')
-    }
-
+  addItem(index: PathIndex, item: ShaMapItem): void {
     const nibble = index.nibble(this.depth)
     const existing = this.branches[nibble]
     if (existing === undefined) {
-      if (this.depth < depth) {
-        // Private operation, can leave tree in bad state
-        const shaMapInner = new ShaMapInner(this.depth + 1)
-        this.setBranch(nibble, shaMapInner)
-        shaMapInner.addItem(index, item, depth)
-      } else {
-        this.setBranch(nibble, new ShaMapLeaf(index, item))
-      }
+      this.setBranch(nibble, new ShaMapLeaf(index, item))
     } else if (existing.isLeaf()) {
       const deeper = this.depth + 1
       const newInner = new ShaMapInner(deeper)
       // Set this first in empty inner so addItem can recursively
       // add many inners until indexes diverge.
       newInner.setBranch(existing.index.nibble(deeper), existing)
-      newInner.addItem(index, item, depth)
+      newInner.addItem(index, item)
       this.setBranch(nibble, newInner)
     } else if (existing.isInner()) {
-      existing.addItem(index, item, depth)
+      existing.addItem(index, item)
     } else {
       throw new Error('invalid ShaMap.addItem call')
     }
@@ -108,12 +114,12 @@ export class ShaMapInner extends ShaMapNode {
     leafIndex: PathIndex,
     leafHash?: HashT256,
     stack: ShaMapInner[] = []
-  ): StackToPath {
+  ): LeafSearch {
     const nibble = leafIndex.nibble(this.depth)
     const target = this.branches[nibble]
 
     if (!target) {
-      return { inners: stack }
+      return {}
     }
 
     if (target.isLeaf()) {
@@ -121,7 +127,7 @@ export class ShaMapInner extends ShaMapNode {
         (leafHash && target.hash().eq(leafHash)) ||
         (!leafHash && target.index.eq(leafIndex))
       ) {
-        return { leaf: target, inners: [...stack, this] }
+        return { leaf: target }
       }
     }
 
@@ -130,7 +136,7 @@ export class ShaMapInner extends ShaMapNode {
       return target._findPathToLeaf(leafIndex, leafHash, stack)
     }
 
-    return { inners: stack }
+    return {}
   }
 
   trieJSON(): TrieJson {
@@ -144,11 +150,11 @@ export class ShaMapInner extends ShaMapNode {
     return trie
   }
 
-  sinkTrieBinary(sink: BytesSink, abbrev: boolean = true) {
+  protected sinkTrieBinary(sink: BytesSink, abbrev: boolean = true) {
     const header = this.trieBranchesHeader(abbrev)
     sink.put(header)
 
-    this.eachBranch((node, ix) => {
+    this.eachBranch(node => {
       if (node) {
         if (node.isInner()) {
           node.sinkTrieBinary(sink, abbrev)
@@ -165,13 +171,7 @@ export class ShaMapInner extends ShaMapNode {
 
   trieBinary(abbrev = true) {
     const buffers: Uint8Array[] = []
-    const sink: BytesSink = {
-      put(buf: Uint8Array) {
-        buffers.push(buf)
-        return this
-      }
-    }
-    this.sinkTrieBinary(sink, abbrev)
+    this.sinkTrieBinary({ put: buffers.push.bind(buffers) }, abbrev)
     return concatBytes(buffers)
   }
 
