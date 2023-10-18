@@ -34,6 +34,10 @@ export class ShaMapLeaf extends ShaMapNode {
     return 'preHashed' in this.item && !!this.item.type
   }
 
+  preHashedType() {
+    return ('preHashed' in this.item && this.item.type) || undefined
+  }
+
   hasHashable(): boolean {
     return !this.hasPreHashed()
   }

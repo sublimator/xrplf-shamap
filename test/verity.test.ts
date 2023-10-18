@@ -152,7 +152,7 @@ describe('Known SHAMap hashes', () => {
       const short = new ShaMap()
       for (const [index, item] of items) {
         const hash = hashItem(index, item)
-        short.addItem(index, { preHashed: hash })
+        short.addItem(index, { type: 'leaf', preHashed: hash })
       }
       expect(short.hash().toHex()).toBe(expectedHash)
     })
@@ -204,14 +204,16 @@ describe('should be able produce binary tries - transactions', () => {
     expect(bin).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
 
     const trie = map.trieBinary()
-    expect(trie.length).toBe(4 + 10 * 32)
+    expect(trie.length).toBe(4 + 4 + 10 * /*1+ untyped */ 32)
     expect(
       Buffer.from(trie.subarray(0, 4)).readUint32BE(0).toString(2)
-    ).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
+    ).toMatchInlineSnapshot(`"10"`)
     expect(
-      new BinaryTrieParser(trie).uint32().toString(2)
+      new BinaryTrieParser(trie).readAndSetVersion().uint32().toString(2)
     ).toMatchInlineSnapshot(`"10001010100010000000101010100010"`)
     const parser = new BinaryTrieParser(trie)
+    parser.readAndSetVersion()
+
     expect(Array.from(parser.trieHeader())).toMatchInlineSnapshot(`
       [
         [
@@ -280,33 +282,50 @@ describe('should be able produce binary tries - transactions', () => {
         ],
       ]
     `)
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"85EDB3AAE233DAF3586C1971BDB506D83FE3C01A2067A6ADCFC673C9FB2A04FA"`
     )
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"4AB1B987E197EF882B732B6046C07E5AD48FD79C9FE0CC045AD33A34EFCDEC41"`
     )
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"84060C55762EF6E725C89A1FC05816CF8D54376EAAFF5AE2F9CB1E4635AF7D10"`
     )
+
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"3A83A6ED6F428D225A8EA81735784047AF8127E35345D5ADA41A72469D0310DF"`
     )
+
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"7A93A718F9775B1D1BC556554D728E2C7E8280D2A9920106B8E445865CAE81A0"`
     )
+
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"9E3DE394834F67D00760146FB98DDBFC5D1E62B07BAB0FEE06B0104F6CEFB7EE"`
     )
+
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"767CB9A138D2261330818159FA284B4158C7B30907F75F2D3BB16AB35DBDDDE2"`
     )
+
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"09E9DFCA2971BA64444BE553D6C5FBE2E3018E244DA2E0D5FBD835D11101D86E"`
     )
+
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"5DF77E936CEB1709927EDECA0B5743EFB081E68616A709258EE746D1B1FB925E"`
     )
+
+    parser.preHashedType() // skip past type
     expect(parser.hash().toHex()).toMatchInlineSnapshot(
       `"5FEB5254C1AFCA4E9536899A1AC1A5FADBE12E96E3512CF34906DC62D20DA2C1"`
     )
@@ -348,10 +367,12 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
     expect(map.hash().toHex()).toBe(expectedHash)
 
     expect(items.length).toBe(40)
-    expect(JSON.stringify(map.trieJSON()).length).toMatchInlineSnapshot(`2925`)
+    expect(JSON.stringify(map.trieJSON({})).length).toMatchInlineSnapshot(
+      `2925`
+    )
 
     const trie = map.trieBinary() //
-    expect(trie.length).toMatchInlineSnapshot(`1340`)
+    expect(trie.length).toMatchInlineSnapshot(`1344`)
     const retrie = ShaMap.fromTrieBinary(trie)
     expect(retrie.trieJSON()).toMatchInlineSnapshot(`
       {
@@ -429,7 +450,7 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
 
     const abbrevLeaf = items[14][0]
     const bin = map.abbreviatedWith(abbrevLeaf).trieBinary()
-    expect(bin.length).toMatchInlineSnapshot(`520`)
+    expect(bin.length).toMatchInlineSnapshot(`524`)
     expect(ShaMap.fromTrieBinary(bin).hash().toHex()).toBe(expectedHash)
   })
 })
@@ -453,7 +474,7 @@ describe('Trie headers', () => {
     expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
       `"1000000000000000000000000000000"`
     )
-    parser.offset = 0
+    parser.reset()
     expect(Array.from(parser.trieHeader())).toMatchInlineSnapshot(`
       [
         [
@@ -542,7 +563,7 @@ describe('Trie headers', () => {
     expect(parser.uint32().toString(2)).toMatchInlineSnapshot(
       `"11000000000000000000000000000000"`
     )
-    parser.offset = 0
+    parser.reset()
     expect(Array.from(parser.trieHeader())).toMatchInlineSnapshot(`
       [
         [

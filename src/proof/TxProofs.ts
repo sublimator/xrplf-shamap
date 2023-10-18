@@ -24,24 +24,31 @@ export function transactionItemizer(tx: Transaction) {
 export interface CreateTxProofsParams {
   transactions: Transaction[]
   binary?: boolean
+  // uses some extra bytes, but can be helpful when debugging
+  // shows whether hashes are inners or leaves
+  typedTries?: boolean
 }
 
 export function createTxProofs({
   transactions,
-  binary = false
+  binary = false,
+  typedTries = false
 }: CreateTxProofsParams): TxProofs {
+  const trieArgs = { typed: typedTries }
   const map = new ShaMap()
   const items = transactions.map(transactionItemizer)
   for (const [index, item] of items) {
     map.addItem(index, item)
   }
   const treeHash = map.hash().toHex()
-  const allTx = binary ? map.trieBinary() : map.trieJSON()
+  const allTx = binary ? map.trieBinary(trieArgs) : map.trieJSON(trieArgs)
   const perTx: TxProofs['perTx'] = {}
 
   items.forEach(([index]) => {
-    const abbrev = map.abbreviate((d, ix) => index.nibble(d) == ix)
-    const trie = binary ? abbrev.trieBinary() : abbrev.trieJSON()
+    const abbrev = map.abbreviatedWith(index)
+    const trie = binary
+      ? abbrev.trieBinary(trieArgs)
+      : abbrev.trieJSON(trieArgs)
     const txId = index.toHex()
     perTx[txId] = {
       trie

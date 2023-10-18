@@ -15,8 +15,20 @@ export class ShaMap extends ShaMapInner {
           addTo(val as JsonObject, prefix.concat(key))
         } else if (typeof val === 'string') {
           const index = Path.from(prefix.concat(key))
-          // item type is undefined, todo?
-          map.addItem(index, { preHashed: Hash256.from(val) })
+          const isTyped = val.length === 65
+          const typeChar = isTyped ? val[0] : 'u'
+          if (typeChar !== 'l' && typeChar !== 'i' && typeChar !== 'u') {
+            throw new Error(`invalid preHashed type char ${typeChar}`)
+          }
+          map.addItem(index, {
+            type:
+              typeChar === 'l'
+                ? 'leaf'
+                : typeChar === 'i'
+                ? 'inner'
+                : undefined,
+            preHashed: Hash256.from(isTyped ? val.slice(1) : val)
+          })
         }
       })
     }
@@ -28,6 +40,7 @@ export class ShaMap extends ShaMapInner {
   static fromTrieBinary(trie: Uint8Array): ShaMap {
     const map = new ShaMap()
     const parser = new BinaryTrieParser(trie)
+    parser.readAndSetVersion()
 
     function parse(node: ShaMapInner, path: number[]) {
       for (const [i, type] of parser.trieHeader()) {
@@ -38,7 +51,7 @@ export class ShaMap extends ShaMapInner {
         } else if (type === BRANCH.preHashed) {
           const index = Path.from(path.concat(i))
           // item type is undefined, todo?
-          map.addItem(index, { preHashed: parser.hash() })
+          map.addItem(index, parser.preHashed())
         } else if (type === BRANCH.item) {
           throw new Error('R.F.U')
         }

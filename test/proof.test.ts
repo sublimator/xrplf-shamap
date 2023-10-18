@@ -12,10 +12,15 @@ import { ledgerIdent } from './utils/ledgerIdent'
 const ledgers = [ledger1, ledger2]
 
 describe.each(ledgers)('proof', ledger => {
-  describe.each([true, false])('binary %s', binary => {
+  describe.each([
+    { binary: false, typedTries: false },
+    { binary: false, typedTries: true },
+    { binary: true, typedTries: false },
+    { binary: true, typedTries: true }
+  ])('binary %s', binary => {
     const proofs = createTxProofs({
       transactions: ledger.transactions,
-      binary
+      ...binary
     })
 
     const tries = proofs.perTx
@@ -26,8 +31,10 @@ describe.each(ledgers)('proof', ledger => {
 
     expect(
       !binary ? undefined : Object.values(tries).map(t => t.trie.length)
-    ).toMatchSnapshot()
-    expect(!binary ? undefined : proofs.allTx.length).toMatchSnapshot()
+    ).toMatchSnapshot('perTx binary trie size')
+    expect(!binary ? undefined : proofs.allTx.length).toMatchSnapshot(
+      `all Tx binary trie size`
+    )
 
     expect(proofs).toMatchSnapshot()
 

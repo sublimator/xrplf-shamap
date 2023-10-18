@@ -8,6 +8,16 @@ import { Hash256 } from '../../indexes/Hash256'
 import { TrieJson } from '../../proof/types'
 import { trieBranchesHeader } from '../binary-trie/trieBranchesHeader'
 import { bytesList } from '../../utils/bytesList'
+import { trieVersionHeader } from '../binary-trie/trieVersionHeader'
+
+interface TrieBinaryParams {
+  typed?: boolean
+  abbrev?: boolean
+}
+
+interface TrieJSONParams {
+  typed?: boolean
+}
 
 export class ShaMapInner extends ShaMapNode {
   private slotBits = 0
@@ -123,27 +133,49 @@ export class ShaMapInner extends ShaMapNode {
     }
   }
 
-  trieJSON(): TrieJson {
+  trieJSON({ typed = false }: TrieJSONParams = {}): TrieJson {
     const trie: TrieJson = {}
     this.eachBranch((node, ix) => {
       const nibble = ix.toString(16).toUpperCase()
       if (node) {
-        trie[nibble] = node.isInner() ? node.trieJSON() : node.hash().toHex()
+        trie[nibble] = node.isLeaf()
+          ? typed
+            ? `${
+                (node.hasHashable()
+                  ? 'leaf'
+                  : node.preHashedType() ?? 'undefined')[0]
+              }${node.hash().toHex()}`
+            : node.hash().toHex()
+          : (node as ShaMapInner).trieJSON({ typed })
       }
     })
     return trie
   }
 
-  protected sinkTrieBinary(sink: BytesSink, abbrev: boolean = true) {
+  protected sinkTrieBinary(
+    sink: BytesSink,
+    abbrev: boolean = true,
+    typed = true
+  ) {
+    if (this.depth === 0) {
+      sink.put(trieVersionHeader(typed))
+    }
     const header = trieBranchesHeader(this, abbrev)
     sink.put(header)
 
     this.eachBranch(node => {
       if (node) {
         if (node.isInner()) {
-          node.sinkTrieBinary(sink, abbrev)
+          node.sinkTrieBinary(sink, abbrev, typed)
         } else if (node.isLeaf()) {
           if (abbrev || node.hasPreHashed()) {
+            const map = { undefined: 0, inner: 1, leaf: 2 }
+            const type = node.preHashedType()
+            // TODO: Do we even need this ?
+            // It seems like a waste of bytes
+            if (typed) {
+              sink.put(Uint8Array.of(map[`${type}`]))
+            }
             node.hash().toSink(sink)
           } else {
             throw new Error('R.F.U')
@@ -153,9 +185,9 @@ export class ShaMapInner extends ShaMapNode {
     })
   }
 
-  trieBinary(abbrev = true) {
+  trieBinary({ typed = false, abbrev = true }: TrieBinaryParams = {}) {
     const list = bytesList()
-    this.sinkTrieBinary(list, abbrev)
+    this.sinkTrieBinary(list, abbrev, typed)
     return list.done()
   }
 
