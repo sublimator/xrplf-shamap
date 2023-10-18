@@ -68,6 +68,10 @@ export class ShaMapInner extends ShaMapNode {
     const target = this.followPath(index)
     if (target) {
       if (target.isLeaf()) {
+        if (!leafHash) {
+          Hash256.assertIsHashT256(index, 'likely an error')
+        }
+
         if (
           (leafHash && target.hash().eq(leafHash)) ||
           (!leafHash && target.index.eq(index))
