@@ -164,8 +164,15 @@ export class ShaMapInner extends ShaMapNode {
       if (b) {
         if (b.isInner()) {
           b.walkLeaves(onLeaf)
-        } else if (b.isLeaf() && !b.hasPreHashedInner()) {
-          onLeaf(b)
+        } else if (b.isLeaf()) {
+          if (b.hasPreHashed() && !b.hasTypedPreHashed()) {
+            throw new Error(
+              'Probably an error, this walks any item that WAS ' +
+                'an actual leaf and we can not tell with no type'
+            )
+          } else if (!b.hasPreHashedInner()) {
+            onLeaf(b)
+          }
         }
       }
     })
