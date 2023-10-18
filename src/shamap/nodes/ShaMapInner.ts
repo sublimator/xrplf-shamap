@@ -5,15 +5,9 @@ import { ShaMapLeaf } from './ShaMapLeaf'
 import { ShaMapItem } from './ShaMapItem'
 import { Sha512 } from '../../indexes/Sha512'
 import { Hash256 } from '../../indexes/Hash256'
-import { BRANCH, BranchType } from '../binary-trie/consts'
-import { uInt32Bytes } from '../../utils/UInt32Bytes'
-import { concatBytes } from '../../utils/concatBytes'
 import { TrieJson } from '../../proof/types'
 import { trieBranchesHeader } from '../binary-trie/trieBranchesHeader'
-
-export interface LeafSearch {
-  leaf?: ShaMapLeaf
-}
+import { bytesList } from '../../utils/bytesList'
 
 export class ShaMapInner extends ShaMapNode {
   private slotBits = 0
@@ -156,9 +150,9 @@ export class ShaMapInner extends ShaMapNode {
   }
 
   trieBinary(abbrev = true) {
-    const buffers: Uint8Array[] = []
-    this.sinkTrieBinary({ put: buffers.push.bind(buffers) }, abbrev)
-    return concatBytes(buffers)
+    const list = bytesList()
+    this.sinkTrieBinary(list, abbrev)
+    return list.done()
   }
 
   walkLeaves(onLeaf: (node: ShaMapLeaf) => void) {
