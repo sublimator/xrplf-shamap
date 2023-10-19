@@ -37,7 +37,7 @@ describe.each(ledgers)('proof', ledger => {
     expect(
       !params ? undefined : Object.values(tries).map(t => t.trie.length)
     ).toMatchSnapshot('perTx binary trie size')
-    expect(!params ? undefined : proofs.allTx.length).toMatchSnapshot(
+    expect(!params ? undefined : proofs.allTx.trie.length).toMatchSnapshot(
       `all Tx binary trie size`
     )
 

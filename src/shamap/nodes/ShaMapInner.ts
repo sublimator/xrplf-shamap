@@ -64,11 +64,11 @@ export class ShaMapInner extends ShaMapNode {
     return this.slotBits === 0
   }
 
-  toSink(list: BytesSink): void {
+  toSink(sink: BytesSink): void {
     for (let i = 0; i < this.branches.length; i++) {
       const branch = this.branches[i]
       const hash = branch ? branch.hash() : Hash256.ZERO_256
-      hash.toSink(list)
+      hash.toSink(sink)
     }
   }
 

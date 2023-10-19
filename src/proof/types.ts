@@ -9,6 +9,6 @@ export type TxId = string
 
 export interface TxProofs {
   treeHash: string // per xrpl ledger transaction_hash
-  allTx: Trie
+  allTx: { trie: Trie }
   perTx: Record<TxId, { trie: Trie }>
 }

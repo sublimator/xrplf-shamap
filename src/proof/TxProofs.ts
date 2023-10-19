@@ -41,7 +41,7 @@ export function createTxProofs({
     map.addItem(index, item)
   }
   const treeHash = map.hash().toHex()
-  const allTx = binary ? map.trieBinary(trieArgs) : map.trieJSON(trieArgs)
+  const allTx = { trie: binary ? map.trieBinary(trieArgs) : map.trieJSON(trieArgs) }
   const perTx: TxProofs['perTx'] = {}
 
   items.forEach(([index]) => {
