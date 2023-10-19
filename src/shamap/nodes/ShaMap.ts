@@ -37,7 +37,7 @@ export class ShaMap extends ShaMapInner {
           parse(newInner, path.concat(i))
         } else if (type === BRANCH.preHashed) {
           const index = Path.from(path.concat(i))
-          map.addItem(index, parser.preHashed())
+          node.addItem(index, parser.preHashed())
         } else if (type === BRANCH.item) {
           throw new Error('R.F.U')
         }
