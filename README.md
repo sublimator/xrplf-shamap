@@ -1,8 +1,14 @@
 # xyzq-shapmah
 
 Experimental SHAMap impl with support for PreHashed items.
-Inner nodes (for abbreviated trees) can be represented as
-leaves on a tree with an already computed hash as item.
+Inner nodes can be represented as leaves on a tree with
+an already computed hash as item.
+
+This can be useful for building trees from minimal data where
+you only care about a particular subset of the whole tree.
+These subsets are "abbreviations".
+
+### Incredulous Inners
 
 On first approach this way of modeling (abbreviated) inners
 as leaves can leave a bad taste in the mouth, but the definition
@@ -35,23 +41,23 @@ export interface PreHashed {
 export type ShaMapItem = Hashable | PreHashed
 ```
 
-### Indexes 
+### Indexes
 
 To support abbreviated trees, there's no hard dependency on a 256 bit index:
 
 ```typescript
 export interface PathIndex extends Hexed {
-   nibbles: number
+  nibbles: number
 
-   nibble(n: number): number
+  nibble(n: number): number
 
-   eq(leafIndex: PathIndex): boolean
+  eq(leafIndex: PathIndex): boolean
 }
 
 export interface HashT256 extends BytesSinkable, Hexed, PathIndex {
-   nibbles: 64
+  nibbles: 64
 
-   eq(leafIndex: HashT256): boolean
+  eq(leafIndex: HashT256): boolean
 }
 
 export type FullIndex = HashT256
