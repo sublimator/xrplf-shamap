@@ -55,5 +55,5 @@
     "total_coins": "98652045574717873",
     "transaction_hash": "A9BB9AA12E16175C714677CB8A9557D29F3E506C7A1A92997CA57A0DCB3EBEE1"
   },
-  "server": "s1.ripple.com:443"
+  "server": "s.altnet.rippletest.net:51233"
 }
