@@ -4,8 +4,74 @@ Experimental SHAMap impl with support for PreHashed items.
 Inner nodes (for abbreviated trees) can be represented as
 leaves on a tree with an already computed hash as item.
 
-There may be a better/cleaner way of modeling it but this
-works. Shrug.
+On first approach this way of modeling (abbreviated) inners
+as leaves can leave a bad taste in the mouth, but the definition
+of a leaf is a terminal node in a tree, and that is the case
+here. You can not descend further into these nodes.
+
+- An inner node has 16 children
+- A leaf node has an item
+- An item can be either a Hashable or PreHashed
+
+```typescript
+
+export interface BytesSink {
+  put(data: Uint8Array): void
+}
+
+export interface BytesSinkable {
+  toSink: (sink: BytesSink) => void
+}
+
+export interface Hashable extends BytesSinkable {
+  hashPrefix: () => Uint8Array
+}
+
+export interface PreHashed {
+  type?: 'leaf' | 'inner'
+  preHashed: HashT256
+}
+
+export type ShaMapItem = Hashable | PreHashed
+```
+
+### Indexes 
+
+To support abbreviated trees, there's no hard dependency on a 256 bit index:
+
+```typescript
+export interface PathIndex extends Hexed {
+   nibbles: number
+
+   nibble(n: number): number
+
+   eq(leafIndex: PathIndex): boolean
+}
+
+export interface HashT256 extends BytesSinkable, Hexed, PathIndex {
+   nibbles: 64
+
+   eq(leafIndex: HashT256): boolean
+}
+
+export type FullIndex = HashT256
+
+```
+
+To query the map for a particular item (for example to prove it was in a tree)
+you either need a full index, or a Path and Leaf hash:
+
+```typescript
+class ShaMap {
+  ...
+  getLeaf(index: FullIndex): ShaMapLeaf | undefined
+
+  getLeaf(index: PathIndex, leafHash: HashT256): ShaMapLeaf | undefined
+  getLeaf(index: PathIndex, leafHash?: HashT256): ShaMapLeaf | undefined {
+    //...
+  }
+}
+```
 
 ### Abbreviations
 
@@ -14,7 +80,7 @@ TODO:docs:more A minimal amount of data with which one can recreate a SHAMap has
 Implementations:
 
 - See: src/shamap/nodes/ShaMap#abbreviated - accepts matcher callback
-- See: src/shamap/nodes/ShaMap#abbreviatedWithOnly - single leaf 
+- See: src/shamap/nodes/ShaMap#abbreviatedWithOnly - single leaf
 - See: src/shamap/nodes/ShaMap#abbreviatedIncluding - subtree
 
 ### Proofs

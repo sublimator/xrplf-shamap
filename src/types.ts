@@ -23,7 +23,7 @@ export interface Hashable extends BytesSinkable {
 }
 
 export interface PreHashed {
-  type?: 'leaf' | 'inner' // HashPrefix ??
+  type?: 'leaf' | 'inner' // TODO: HashPrefix ?
   preHashed: HashT256
 }
 
