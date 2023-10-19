@@ -15,6 +15,8 @@ as leaves can leave a bad taste in the mouth, but the definition
 of a leaf is a terminal node in a tree, and that is the case
 here. You can not descend further into these nodes.
 
+### Itemized Items
+
 - An inner node has 16 children
 - A leaf node has an item
 - An item can be either a Hashable or PreHashed
@@ -41,7 +43,7 @@ export interface PreHashed {
 export type ShaMapItem = Hashable | PreHashed
 ```
 
-### Indexes
+### Nibbling At Indexes
 
 To support abbreviated trees, there's no hard dependency on a 256 bit index:
 
