@@ -62,10 +62,9 @@ To query the map for a particular item (for example to prove it was in a tree)
 you either need a full index, or a Path and Leaf hash:
 
 ```typescript
-class ShaMap {
-  ...
+class ExShaMap {
+  // ...
   getLeaf(index: FullIndex): ShaMapLeaf | undefined
-
   getLeaf(index: PathIndex, leafHash: HashT256): ShaMapLeaf | undefined
   getLeaf(index: PathIndex, leafHash?: HashT256): ShaMapLeaf | undefined {
     //...
@@ -151,7 +150,7 @@ We can then recreate the branch structure from the header, knowing
 how to rebuild the map:
 
 ```typescript
-class Ex {
+class ExParser {
   * trieHeader(): Generator<[number, BranchType]> {
     const header = this.uInt32()
     for (let i = 0; i < 16; i++) {
