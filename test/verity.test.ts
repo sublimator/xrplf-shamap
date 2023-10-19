@@ -71,7 +71,7 @@ describe('Known SHAMap hashes', () => {
         `abbreviated tree ledger ${ledger.ledger_index} index-%s`,
         (index, item) => {
           const hash = hashItem(index, item)
-          const abbr = full.abbreviatedWith(index)
+          const abbr = full.abbreviatedWithOnly(index)
           expect(abbr.hash().toHex()).toBe(expectedHash)
           const trie = abbr.trieJSON()
           expect(trie).toMatchSnapshot()
@@ -451,7 +451,7 @@ describe(`should be able produce binary tries - ledger ${ledger2.header.ledger_i
     expect(retrie.hash().toHex()).toBe(expectedHash)
 
     const abbrevLeaf = items[14][0]
-    const bin = map.abbreviatedWith(abbrevLeaf).trieBinary()
+    const bin = map.abbreviatedWithOnly(abbrevLeaf).trieBinary()
     expect(bin.length).toMatchInlineSnapshot(`521`)
     expect(ShaMap.fromTrieBinary(bin).hash().toHex()).toBe(expectedHash)
   })

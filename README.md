@@ -13,9 +13,9 @@ TODO:docs:more A minimal amount of data with which one can recreate a SHAMap has
 
 Implementations:
 
-- See: src/shamap/nodes/ShaMap#abbreviatedIncluding
-- See: src/shamap/nodes/ShaMap#abbreviated
-- See: src/shamap/nodes/ShaMap#abbreviatedWith
+- See: src/shamap/nodes/ShaMap#abbreviated - accepts matcher callback
+- See: src/shamap/nodes/ShaMap#abbreviatedWithOnly - single leaf 
+- See: src/shamap/nodes/ShaMap#abbreviatedIncluding - subtree
 
 ### Proofs
 

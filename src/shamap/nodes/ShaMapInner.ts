@@ -10,6 +10,7 @@ import { trieBranchesHeader } from '../binary-trie/trieBranchesHeader'
 import { bytesList } from '../../utils/bytesList'
 import { trieVersionHeader } from '../binary-trie/trieVersionHeader'
 import { encodePreHashedType } from '../binary-trie/encodePreHashedType'
+import { encodeLeafJSON } from '../json-trie/encodeLeafJSON'
 
 interface TrieBinaryParams {
   typed?: boolean
@@ -140,12 +141,7 @@ export class ShaMapInner extends ShaMapNode {
       const nibble = ix.toString(16).toUpperCase()
       if (node) {
         trie[nibble] = node.isLeaf()
-          ? typed
-            ? // i|l|u character at start of hash, followed by 64 hex chars
-              `${
-                (node.hasHashable() ? 'l' : node.preHashedType() ?? 'u')[0]
-              }${node.hash().toHex()}`
-            : node.hash().toHex()
+          ? encodeLeafJSON(node, typed)
           : (node as ShaMapInner).trieJSON({ typed })
       }
     })

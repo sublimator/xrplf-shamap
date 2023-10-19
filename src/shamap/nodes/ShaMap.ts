@@ -1,9 +1,9 @@
 import { ShaMapInner } from './ShaMapInner'
 import { Path } from '../../indexes/Path'
 import { JsonObject, PathIndex } from '../../types'
-import { Hash256 } from '../../indexes/Hash256'
 import { BinaryTrieParser } from '../binary-trie/BinaryTrieParser'
 import { BRANCH } from '../binary-trie/consts'
+import { parseLeafJSON } from '../json-trie/parseLeafJSON'
 
 export class ShaMap extends ShaMapInner {
   static fromTrieJSON(trie: JsonObject): ShaMap {
@@ -15,17 +15,7 @@ export class ShaMap extends ShaMapInner {
           addTo(val as JsonObject, prefix.concat(key))
         } else if (typeof val === 'string') {
           const index = Path.from(prefix.concat(key))
-          const isTyped = val.length === 65
-          const typeChar = isTyped ? val[0] : 'u'
-          if (typeChar !== 'l' && typeChar !== 'i' && typeChar !== 'u') {
-            throw new Error(`invalid preHashed type char ${typeChar}`)
-          }
-          const type =
-            typeChar === 'l' ? 'leaf' : typeChar === 'i' ? 'inner' : undefined
-          map.addItem(index, {
-            type: type,
-            preHashed: Hash256.from(isTyped ? val.slice(1) : val)
-          })
+          map.addItem(index, parseLeafJSON(val))
         }
       })
     }
@@ -65,7 +55,7 @@ export class ShaMap extends ShaMapInner {
     })
   }
 
-  abbreviatedWith(path: PathIndex) {
+  abbreviatedWithOnly(path: PathIndex) {
     return this.abbreviate((d, ix) => path.nibble(d) === ix)
   }
 
@@ -74,12 +64,12 @@ export class ShaMap extends ShaMapInner {
   ) {
     const map = new ShaMap()
 
-    function walk(inner: ShaMapInner, _path: number[]) {
+    function walk(inner: ShaMapInner, path: number[]) {
       /// we can't just do this ...
       inner.eachBranch((node, ix) => {
         if (node) {
-          const nodePath = _path.concat(ix)
-          const wantPath = onPath(_path.length, ix, nodePath)
+          const nodePath = path.concat(ix)
+          const wantPath = onPath(path.length, ix, nodePath)
           if (node.isInner() && wantPath) {
             walk(node, nodePath)
           } else {
