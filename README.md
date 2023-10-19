@@ -142,7 +142,7 @@ child branches. With 32 bits, and 16 branches, that leaves 2 bits each.
 1. Empty node
 2. Inner node
 3. PreHashed item - leaf or inner
-    - Depending on initial header byte of trie, the first byte encodes the type (TODO: of debatable value)
+    - Depending on initial header byte of trie, the first byte encodes the PreHashed#type (TODO: of debatable value)
     - In either case, the next fixed length 32 byte encodes the leaf item hash
 4. Hashable item - you know the deal, a HashPrefix (i.e. DST) and some bytes
     - When this bit is set presumably you could use run length encoding ([see](src/utils/variableLength.ts))
